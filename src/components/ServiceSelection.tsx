@@ -25,11 +25,11 @@ const categoryNames = {
 }
 
 const categoryColors = {
-  facial: 'from-[#a6566c] to-[#605a57]',
-  corporal: 'from-[#605a57] to-[#26272b]',
-  depilacion: 'from-[#a6566c] to-[#26272b]',
-  terapeutico: 'from-[#605a57] to-[#a6566c]',
-  estetico: 'from-[#26272b] to-[#a6566c]'
+  facial: 'from-primary to-accent',
+  corporal: 'from-accent to-neutral',
+  depilacion: 'from-primary to-neutral',
+  terapeutico: 'from-accent to-primary',
+  estetico: 'from-neutral to-primary'
 }
 
 export default function ServiceSelection({ services, onSelectService }: ServiceSelectionProps) {
@@ -59,21 +59,21 @@ export default function ServiceSelection({ services, onSelectService }: ServiceS
   return (
     <div className="space-y-8">
       {/* Hero Section */}
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-[#a6566c] to-[#605a57] rounded-full mb-6">
-          <Sparkles className="w-8 h-8 text-white" />
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full mb-4">
+          <Sparkles className="w-6 h-6 text-white" />
         </div>
-        <h2 className="text-4xl font-bold text-[#26272b] mb-4">
+        <h2 className="text-3xl font-bold text-dark mb-3">
           Descubre Nuestros Servicios
         </h2>
-        <p className="text-xl text-[#605a57] max-w-3xl mx-auto leading-relaxed">
+        <p className="text-lg text-neutral max-w-2xl mx-auto leading-relaxed">
           Transformamos tu belleza con tratamientos personalizados y tecnología de vanguardia. 
           Selecciona el servicio que mejor se adapte a tus necesidades.
         </p>
       </div>
 
       {/* Barra de búsqueda */}
-      <div className="max-w-xl mx-auto">
+      <div className="max-w-lg mx-auto">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
           <input
@@ -81,19 +81,19 @@ export default function ServiceSelection({ services, onSelectService }: ServiceS
             placeholder="Buscar tratamientos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-white border-2 border-[#e5cfc2] rounded-2xl focus:border-[#a6566c] focus:ring-4 focus:ring-[#a6566c]/10 transition-all text-[#26272b] placeholder-[#605a57] shadow-lg"
+            className="w-full pl-12 pr-4 py-3 bg-white border-2 border-secondary rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-dark placeholder-neutral shadow-lg"
           />
         </div>
       </div>
 
       {/* Filtros por categoría */}
-      <div className="flex flex-wrap justify-center gap-3">
+      <div className="flex flex-wrap justify-center gap-2">
         <button
           onClick={() => setSelectedCategory(null)}
-          className={`px-6 py-3 rounded-full text-sm font-medium transition-all ${
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
             !selectedCategory
-              ? 'bg-gradient-to-r from-[#a6566c] to-[#605a57] text-white shadow-lg'
-              : 'bg-white text-[#605a57] hover:bg-[#e5cfc2]/30 border border-[#e5cfc2]'
+              ? 'bg-gradient-to-r from-primary to-accent text-white shadow-lg'
+              : 'bg-white text-neutral hover:bg-secondary/50 border border-secondary'
           }`}
         >
           Todos los servicios
@@ -104,10 +104,10 @@ export default function ServiceSelection({ services, onSelectService }: ServiceS
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`px-6 py-3 rounded-full text-sm font-medium transition-all flex items-center space-x-2 ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center space-x-2 ${
                 selectedCategory === category
-                  ? 'bg-gradient-to-r from-[#a6566c] to-[#605a57] text-white shadow-lg'
-                  : 'bg-white text-[#605a57] hover:bg-[#e5cfc2]/30 border border-[#e5cfc2]'
+                  ? 'bg-gradient-to-r from-primary to-accent text-white shadow-lg'
+                  : 'bg-white text-neutral hover:bg-secondary/50 border border-secondary'
               }`}
             >
               <Icon className="h-4 w-4" />

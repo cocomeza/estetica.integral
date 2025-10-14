@@ -40,16 +40,16 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-light via-white to-secondary/30 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="mx-auto h-16 w-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center mb-4">
+            <div className="mx-auto h-16 w-16 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mb-4">
               <Shield className="h-8 w-8 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">Panel de Administración</h2>
-            <p className="mt-2 text-gray-600">Ingresa para gestionar el sistema de turnos</p>
+            <h2 className="text-3xl font-bold text-dark">Panel de Administración</h2>
+            <p className="mt-2 text-neutral">Centro de Estética Integral - Lorena Esquivel</p>
           </div>
 
           {/* Error Message */}
@@ -112,7 +112,7 @@ export default function AdminLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 shadow-lg"
+              className="w-full bg-gradient-to-r from-primary to-accent text-white py-3 px-4 rounded-xl font-medium hover:from-primary/90 hover:to-accent/90 focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 shadow-lg"
             >
               {loading ? (
                 <>
@@ -129,7 +129,7 @@ export default function AdminLogin() {
           <div className="mt-6 text-center">
             <button
               onClick={() => router.push('/')}
-              className="inline-flex items-center px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+              className="inline-flex items-center px-4 py-2 text-primary hover:text-accent hover:bg-secondary/50 rounded-lg transition-colors font-medium"
             >
               <Home className="h-4 w-4 mr-2" />
               Volver al Home

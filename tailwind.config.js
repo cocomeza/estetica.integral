@@ -10,11 +10,15 @@ module.exports = {
       colors: {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
-        // Colores personalizados del centro de estética
-        bone: "#e5cfc2",
-        shark: "#26272b", 
-        chicago: "#605a57",
-        tapestry: "#a6566c",
+        // Nueva paleta elegante para centro de estética
+        primary: "#d4af37",      // Oro elegante
+        secondary: "#f5f5dc",    // Beige suave
+        accent: "#8b7355",       // Marrón cálido
+        neutral: "#6b6b6b",      // Gris sofisticado
+        dark: "#2c2c2c",         // Gris oscuro
+        light: "#faf8f5",        // Crema muy claro
+        success: "#10b981",      // Verde suave
+        error: "#ef4444",        // Rojo suave
       },
       fontFamily: {
         sans: ['var(--font-geist-sans)', 'sans-serif'],
