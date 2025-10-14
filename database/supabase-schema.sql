@@ -28,7 +28,7 @@ CREATE TABLE specialists (
   title VARCHAR(100) DEFAULT 'Esteticista Profesional',
   license VARCHAR(50), -- Matrícula profesional
   address TEXT, -- Dirección del centro
-  specialties TEXT[], -- Array de IDs de servicios que ofrece
+  specialties UUID[], -- Array de IDs de servicios que ofrece
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -131,7 +131,7 @@ INSERT INTO aesthetic_services (name, description, duration, category) VALUES
 
 -- Insertar especialista (Lorena Esquivel)
 INSERT INTO specialists (name, email, phone, bio, years_experience, title, license, address, specialties) VALUES
-('Lorena Esquivel', 'lorena@esteticaintegral.com.ar', '+54 11 1234-5678', 'Especialista en tratamientos estéticos integrales con años de experiencia en el cuidado de la piel y bienestar corporal. Certificada en las últimas técnicas de estética y medicina estética.', 10, 'Esteticista Profesional', 'Mat. 12345', 'Av. Corrientes 1234, CABA, Argentina', ARRAY(SELECT id::text FROM aesthetic_services));
+('Lorena Esquivel', 'lorena@esteticaintegral.com.ar', '+54 11 1234-5678', 'Especialista en tratamientos estéticos integrales con años de experiencia en el cuidado de la piel y bienestar corporal. Certificada en las últimas técnicas de estética y medicina estética.', 10, 'Esteticista Profesional', 'Mat. 12345', 'Av. Corrientes 1234, CABA, Argentina', ARRAY(SELECT id FROM aesthetic_services));
 
 -- Insertar horarios de trabajo
 -- Lunes a Viernes (1-5): Horario completo
@@ -141,7 +141,7 @@ FROM specialists s WHERE s.name = 'Lorena Esquivel';
 
 -- Sábado (6): Solo depilación de 9:00 a 13:00
 INSERT INTO work_schedules (specialist_id, day_of_week, start_time, end_time, allowed_services)
-SELECT s.id, 6, '09:00'::time, '13:00'::time, ARRAY(SELECT aes.id::text FROM aesthetic_services aes WHERE aes.name = 'Depilación Láser')
+SELECT s.id, 6, '09:00'::time, '13:00'::time, ARRAY(SELECT aes.id FROM aesthetic_services aes WHERE aes.name = 'Depilación Láser')
 FROM specialists s WHERE s.name = 'Lorena Esquivel';
 
 -- Crear usuario administrador por defecto (password: admin123)

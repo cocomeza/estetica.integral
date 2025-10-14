@@ -32,7 +32,7 @@ export interface Specialist {
   title: string // ej: "Esteticista Profesional"
   license?: string // Matrícula profesional
   address?: string // Dirección del centro
-  specialties: string[] // IDs de servicios que ofrece
+  specialties: string[] // IDs de servicios que ofrece (como string para compatibilidad)
   is_active: boolean
 }
 
