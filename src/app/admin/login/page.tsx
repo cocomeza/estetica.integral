@@ -45,8 +45,12 @@ export default function AdminLogin() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="mx-auto h-16 w-16 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mb-4">
-              <Shield className="h-8 w-8 text-white" />
+            <div className="mx-auto h-16 w-16 mb-4 flex items-center justify-center">
+              <img 
+                src="/images/logo-estetica-integral.png" 
+                alt="Estética Integral" 
+                className="h-16 w-16 object-contain"
+              />
             </div>
             <h2 className="text-3xl font-bold text-dark">Panel de Administración</h2>
             <p className="mt-2 text-neutral">Centro de Estética Integral - Lorena Esquivel</p>

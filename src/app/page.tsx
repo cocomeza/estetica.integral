@@ -105,8 +105,12 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-primary to-accent p-2 rounded-xl">
-                <Sparkles className="h-6 w-6 text-white" />
+              <div className="flex-shrink-0">
+                <img 
+                  src="/images/logo-estetica-integral.png" 
+                  alt="Estética Integral" 
+                  className="h-12 w-12 object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
