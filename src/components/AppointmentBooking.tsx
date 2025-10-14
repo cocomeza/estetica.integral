@@ -258,7 +258,7 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          doctorId: doctorId,
+          specialistId: specialist?.id,
           appointmentDate: formatDateForAPI(selectedDate),
           appointmentTime: selectedTime,
           patientInfo: normalizedPatientInfo
@@ -622,11 +622,11 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
                     </Dialog.Title>
                     <div className="bg-blue-50 p-4 rounded-xl mb-6">
                       <p className="text-blue-800 font-medium mb-2">
-                        ¿Confirmas la reserva del turno médico?
+                        ¿Confirmas la reserva del turno estético?
                       </p>
                       <div className="text-sm text-blue-700 space-y-1">
-                        <p><strong>Doctor:</strong> Dr. {doctor?.name}</p>
-                        <p><strong>Especialidad:</strong> {doctor?.specialty?.name}</p>
+                        <p><strong>Especialista:</strong> {specialist?.name}</p>
+                        <p><strong>Servicio:</strong> {service?.name}</p>
                         <p><strong>Fecha:</strong> {selectedDate && format(selectedDate, 'd MMMM yyyy', { locale: es })}</p>
                         <p><strong>Hora:</strong> {selectedTime}</p>
                         <p><strong>Paciente:</strong> {patientInfo.name}</p>
@@ -706,10 +706,10 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
                     </Dialog.Title>
                     <div className="bg-green-50 p-4 rounded-xl mb-6">
                       <p className="text-green-800 font-medium mb-2">
-                        Tu cita médica ha sido guardada en el sistema
+                        Tu cita estética ha sido guardada en el sistema
                       </p>
                       <p className="text-sm text-green-700">
-                        El turno está registrado con el Dr. {doctor?.name} para el {selectedDate && format(selectedDate, 'd MMMM yyyy', { locale: es })} a las {selectedTime}.
+                        El turno está registrado con {specialist?.name} para el {selectedDate && format(selectedDate, 'd MMMM yyyy', { locale: es })} a las {selectedTime} para el servicio de {service?.name}.
                       </p>
                     </div>
                     

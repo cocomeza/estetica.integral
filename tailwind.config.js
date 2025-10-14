@@ -10,6 +10,11 @@ module.exports = {
       colors: {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
+        // Colores personalizados del centro de estética
+        bone: "#e5cfc2",
+        shark: "#26272b", 
+        chicago: "#605a57",
+        tapestry: "#a6566c",
       },
       fontFamily: {
         sans: ['var(--font-geist-sans)', 'sans-serif'],
