@@ -69,27 +69,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      const { doctorId, patientId, appointmentDate, appointmentTime, status, notes } = req.body
+      // Verificar si es una reserva pública (desde el frontend) o admin
+      const { specialistId, serviceId, patientInfo, appointmentDate, appointmentTime, duration } = req.body
+      
+      if (specialistId && serviceId && patientInfo) {
+        // Reserva pública desde el frontend
+        console.log('📝 Creando reserva pública:', { specialistId, serviceId, patientInfo, appointmentDate, appointmentTime, duration })
+        
+        if (!specialistId || !serviceId || !appointmentDate || !appointmentTime || !patientInfo?.name || !patientInfo?.email) {
+          return res.status(400).json({ error: 'Especialista, servicio, fecha, hora y datos del paciente son requeridos' })
+        }
 
-      if (!doctorId || !patientId || !appointmentDate || !appointmentTime) {
-        return res.status(400).json({ error: 'Doctor, paciente, fecha y hora son requeridos' })
+        // Crear el appointment usando la función pública
+        const { createPublicAppointment } = await import('../../src/lib/supabase-admin')
+        const newAppointment = await createPublicAppointment({
+          specialistId,
+          serviceId,
+          appointmentDate,
+          appointmentTime,
+          duration: duration || 45,
+          patientInfo
+        })
+
+        console.log('✅ Reserva creada exitosamente:', newAppointment)
+        return res.status(201).json({ 
+          success: true, 
+          appointment: newAppointment 
+        })
+      } else {
+        // Reserva desde admin (formato anterior)
+        const { doctorId, patientId, appointmentDate, appointmentTime, status, notes } = req.body
+
+        if (!doctorId || !patientId || !appointmentDate || !appointmentTime) {
+          return res.status(400).json({ error: 'Doctor, paciente, fecha y hora son requeridos' })
+        }
+
+        const newAppointment = await createAppointmentForAdmin({
+          doctorId,
+          patientId,
+          appointmentDate,
+          appointmentTime,
+          status,
+          notes
+        })
+
+        return res.status(201).json({ 
+          success: true, 
+          appointment: newAppointment 
+        })
       }
-
-      const newAppointment = await createAppointmentForAdmin({
-        doctorId,
-        patientId,
-        appointmentDate,
-        appointmentTime,
-        status,
-        notes
-      })
-
-      return res.status(201).json({ 
-        success: true, 
-        appointment: newAppointment 
-      })
     } catch (error: any) {
-      console.error('Error creating appointment:', error)
+      console.error('❌ Error creating appointment:', error)
       return res.status(400).json({ error: error.message || 'Error al crear la cita' })
     }
   }

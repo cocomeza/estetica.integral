@@ -2,21 +2,35 @@ import { createClient } from '@supabase/supabase-js'
 import { getTodayString, getDayOfWeek } from './date-utils'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Cliente de Supabase con permisos de administrador (service role)
+// Cliente de Supabase con permisos de administrador (service role) o anónimo como fallback
 // Solo debe usarse en el servidor, nunca en el cliente
-// Verificar que las variables de entorno estén configuradas
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('SUPABASE_SERVICE_ROLE_KEY y NEXT_PUBLIC_SUPABASE_URL deben estar configurados para el panel admin')
+let supabaseAdmin: any = null
+
+if (supabaseUrl && supabaseServiceKey) {
+  // Modo producción con service role
+  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  })
+} else if (supabaseUrl && supabaseAnonKey) {
+  // Modo demo con clave anónima
+  console.warn('⚠️ Usando clave anónima para operaciones admin (modo demo)')
+  supabaseAdmin = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  })
+} else {
+  console.error('❌ No hay configuración de Supabase disponible')
 }
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-})
+export { supabaseAdmin }
 
 export interface AppointmentWithDetails {
   id: string
@@ -111,7 +125,7 @@ export async function getAppointmentsForAdmin({
       .or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
     
     if (matchingPatients && matchingPatients.length > 0) {
-      const patientIds = matchingPatients.map(p => p.id)
+      const patientIds = matchingPatients.map((p: any) => p.id)
       query = query.in('patient_id', patientIds)
     } else {
       // No hay pacientes que coincidan, retornar resultados vacíos
@@ -436,7 +450,7 @@ export async function getAvailableTimesForAdmin(doctorId: string, date: string) 
     .eq('appointment_date', date)
     .neq('status', 'cancelled')
 
-  const bookedTimes = existingAppointments?.map(apt => apt.appointment_time) || []
+  const bookedTimes = existingAppointments?.map((apt: any) => apt.appointment_time) || []
 
   // Generar horarios disponibles (cada 30 minutos)
   const times = []
@@ -457,4 +471,158 @@ export async function getAvailableTimesForAdmin(doctorId: string, date: string) 
   }
 
   return times
+}
+
+// Función para crear una reserva pública (desde el frontend)
+export async function createPublicAppointment({
+  specialistId,
+  serviceId,
+  appointmentDate,
+  appointmentTime,
+  duration,
+  patientInfo
+}: {
+  specialistId: string
+  serviceId: string
+  appointmentDate: string
+  appointmentTime: string
+  duration: number
+  patientInfo: {
+    name: string
+    email: string
+    phone?: string
+  }
+}) {
+  console.log('🔄 Iniciando creación de reserva pública...')
+  
+  try {
+    // 1. Verificar que el especialista existe y está activo
+    const { data: specialist, error: specialistError } = await supabaseAdmin
+      .from('specialists')
+      .select('id, name, is_active')
+      .eq('id', specialistId)
+      .eq('is_active', true)
+      .single()
+
+    if (specialistError || !specialist) {
+      throw new Error('Especialista no encontrado o inactivo')
+    }
+
+    // 2. Verificar que el servicio existe y está activo
+    const { data: service, error: serviceError } = await supabaseAdmin
+      .from('aesthetic_services')
+      .select('id, name, duration, is_active')
+      .eq('id', serviceId)
+      .eq('is_active', true)
+      .single()
+
+    if (serviceError || !service) {
+      throw new Error('Servicio no encontrado o inactivo')
+    }
+
+    // 3. Verificar disponibilidad del horario
+    const { data: existingAppointment } = await supabaseAdmin
+      .from('appointments')
+      .select('id')
+      .eq('specialist_id', specialistId)
+      .eq('appointment_date', appointmentDate)
+      .eq('appointment_time', appointmentTime)
+      .neq('status', 'cancelled')
+      .single()
+
+    if (existingAppointment) {
+      throw new Error('El horario seleccionado ya no está disponible')
+    }
+
+    // 4. Buscar o crear el paciente
+    let patient
+    const { data: existingPatient } = await supabaseAdmin
+      .from('patients')
+      .select('id, name, email, phone')
+      .eq('email', patientInfo.email.toLowerCase().trim())
+      .single()
+
+    if (existingPatient) {
+      // Actualizar datos del paciente si es necesario
+      const { data: updatedPatient, error: updateError } = await supabaseAdmin
+        .from('patients')
+        .update({
+          name: patientInfo.name.trim(),
+          phone: patientInfo.phone?.trim() || existingPatient.phone,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingPatient.id)
+        .select()
+        .single()
+
+      if (updateError) {
+        console.error('Error actualizando paciente:', updateError)
+        patient = existingPatient
+      } else {
+        patient = updatedPatient
+      }
+    } else {
+      // Crear nuevo paciente
+      const { data: newPatient, error: patientError } = await supabaseAdmin
+        .from('patients')
+        .insert({
+          name: patientInfo.name.trim(),
+          email: patientInfo.email.toLowerCase().trim(),
+          phone: patientInfo.phone?.trim(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (patientError) {
+        console.error('Error creando paciente:', patientError)
+        throw new Error('Error al registrar los datos del paciente')
+      }
+
+      patient = newPatient
+    }
+
+    // 5. Crear la cita
+    const appointmentData = {
+      specialist_id: specialistId,
+      patient_id: patient.id,
+      service_id: serviceId,
+      appointment_date: appointmentDate,
+      appointment_time: appointmentTime,
+      duration: duration,
+      status: 'scheduled' as const,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    const { data: newAppointment, error: appointmentError } = await supabaseAdmin
+      .from('appointments')
+      .insert(appointmentData)
+      .select(`
+        id,
+        appointment_date,
+        appointment_time,
+        duration,
+        status,
+        notes,
+        created_at,
+        specialist:specialists(id, name, title, email, phone),
+        service:aesthetic_services(id, name, description, duration),
+        patient:patients(id, name, email, phone)
+      `)
+      .single()
+
+    if (appointmentError) {
+      console.error('Error creando cita:', appointmentError)
+      throw new Error('Error al crear la reserva')
+    }
+
+    console.log('✅ Reserva pública creada exitosamente:', newAppointment.id)
+    return newAppointment
+
+  } catch (error: any) {
+    console.error('❌ Error en createPublicAppointment:', error)
+    throw error
+  }
 }
