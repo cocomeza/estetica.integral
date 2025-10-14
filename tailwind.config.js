@@ -10,15 +10,22 @@ module.exports = {
       colors: {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
-        // Nueva paleta elegante para centro de estética
-        primary: "#d4af37",      // Oro elegante
-        secondary: "#f5f5dc",    // Beige suave
-        accent: "#8b7355",       // Marrón cálido
-        neutral: "#6b6b6b",      // Gris sofisticado
-        dark: "#2c2c2c",         // Gris oscuro
-        light: "#faf8f5",        // Crema muy claro
-        success: "#10b981",      // Verde suave
-        error: "#ef4444",        // Rojo suave
+        // Paleta basada en el logo de Estética Integral
+        primary: "#d63384",      // Rosa/Magenta profundo del logo
+        secondary: "#f8d7da",    // Rosa claro del logo
+        accent: "#6c757d",       // Gris oscuro del texto "INTEGRAL"
+        neutral: "#495057",      // Gris medio
+        dark: "#343a40",         // Gris muy oscuro
+        light: "#fdf2f8",        // Rosa muy claro de fondo
+        success: "#28a745",      // Verde suave
+        error: "#dc3545",        // Rojo suave
+        pink: {
+          50: "#fdf2f8",
+          100: "#fce7f3", 
+          500: "#ec4899",
+          600: "#d63384",
+          700: "#be185d"
+        }
       },
       fontFamily: {
         sans: ['var(--font-geist-sans)', 'sans-serif'],

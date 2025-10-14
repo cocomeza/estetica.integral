@@ -25,11 +25,11 @@ const categoryNames = {
 }
 
 const categoryColors = {
-  facial: 'from-primary to-accent',
-  corporal: 'from-accent to-neutral',
-  depilacion: 'from-primary to-neutral',
-  terapeutico: 'from-accent to-primary',
-  estetico: 'from-neutral to-primary'
+  facial: 'from-pink-600 to-pink-500',
+  corporal: 'from-primary to-pink-500',
+  depilacion: 'from-pink-700 to-primary',
+  terapeutico: 'from-accent to-pink-600',
+  estetico: 'from-pink-500 to-primary'
 }
 
 export default function ServiceSelection({ services, onSelectService }: ServiceSelectionProps) {
