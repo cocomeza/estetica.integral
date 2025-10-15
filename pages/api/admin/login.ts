@@ -41,6 +41,8 @@ export default async function handler(
   try {
     const { email, password } = req.body
     console.log('📧 Login attempt for:', email)
+    console.log('🔑 JWT_SECRET exists:', !!process.env.JWT_SECRET)
+    console.log('🔑 JWT_SECRET value:', process.env.JWT_SECRET ? 'SET' : 'NOT SET')
 
     if (!email || !password) {
       console.log('❌ Missing credentials')
@@ -79,11 +81,15 @@ export default async function handler(
     console.log('✅ Password valid, creating session...')
     
     // Crear sesión
-    const sessionCookie = await setAdminSession(email)
-    
-    res.setHeader('Set-Cookie', sessionCookie)
-    console.log('✅ Login successful')
-    res.status(200).json({ success: true, user: { email: admin.email, role: admin.role } })
+    try {
+      const sessionCookie = await setAdminSession(email)
+      res.setHeader('Set-Cookie', sessionCookie)
+      console.log('✅ Login successful')
+      res.status(200).json({ success: true, user: { email: admin.email, role: admin.role } })
+    } catch (sessionError) {
+      console.error('❌ Error creating session:', sessionError)
+      res.status(500).json({ error: 'Error al crear sesión', details: sessionError.message })
+    }
   } catch (error: any) {
     console.error('❌ Error in admin login:', error)
     res.status(500).json({ error: 'Error interno del servidor', details: error.message })
