@@ -205,11 +205,17 @@ CREATE POLICY "Specialists are editable by admins only" ON specialists FOR ALL U
 CREATE POLICY "Active schedules are viewable by everyone" ON work_schedules FOR SELECT USING (is_active = true);
 CREATE POLICY "Schedules are editable by admins only" ON work_schedules FOR ALL USING (auth.role() = 'service_role');
 
--- Políticas para pacientes (privados, solo acceso de admin/service)
-CREATE POLICY "Patients are private" ON patients FOR ALL USING (auth.role() = 'service_role');
+-- Políticas para pacientes (permitir creación pública, gestión solo admin)
+CREATE POLICY "Anyone can create patients" ON patients FOR INSERT WITH CHECK (true);
+CREATE POLICY "Service role can read all patients" ON patients FOR SELECT USING (auth.role() = 'service_role');
+CREATE POLICY "Service role can update patients" ON patients FOR UPDATE USING (auth.role() = 'service_role');
+CREATE POLICY "Service role can delete patients" ON patients FOR DELETE USING (auth.role() = 'service_role');
 
--- Políticas para citas (privadas, solo acceso de admin/service)
-CREATE POLICY "Appointments are private" ON appointments FOR ALL USING (auth.role() = 'service_role');
+-- Políticas para citas (permitir creación pública, gestión solo admin)
+CREATE POLICY "Anyone can create appointments" ON appointments FOR INSERT WITH CHECK (true);
+CREATE POLICY "Service role can read all appointments" ON appointments FOR SELECT USING (auth.role() = 'service_role');
+CREATE POLICY "Service role can update appointments" ON appointments FOR UPDATE USING (auth.role() = 'service_role');
+CREATE POLICY "Service role can delete appointments" ON appointments FOR DELETE USING (auth.role() = 'service_role');
 
 -- Políticas para administradores (solo acceso de service role)
 CREATE POLICY "Admin users are private" ON admin_users FOR ALL USING (auth.role() = 'service_role');
