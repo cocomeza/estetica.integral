@@ -46,14 +46,18 @@ interface AppointmentData {
   status: 'scheduled' | 'completed' | 'cancelled'
   notes?: string
   created_at: string
-  doctor: {
+  specialist: {
     id: string
     name: string
     email: string
     phone: string
-    specialty: {
-      name: string
-    }
+    title: string
+  }
+  service: {
+    id: string
+    name: string
+    description: string
+    duration: number
   }
   patient: {
     id: string
@@ -74,9 +78,7 @@ interface Doctor {
   id: string
   name: string
   email: string
-  specialty: {
-    name: string
-  }
+  title: string
 }
 
 interface Patient {
@@ -87,7 +89,7 @@ interface Patient {
 }
 
 interface CreateAppointmentForm {
-  doctorId: string
+  specialistId: string
   patientId: string
   patientName?: string
   patientEmail?: string
@@ -110,7 +112,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   // Filtros
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [doctorFilter, setDoctorFilter] = useState('')
+  const [specialistFilter, setSpecialistFilter] = useState('')
   const [dateFromFilter, setDateFromFilter] = useState('')
   const [dateToFilter, setDateToFilter] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -150,7 +152,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   
   // Formulario de crear/editar cita
   const [appointmentForm, setAppointmentForm] = useState<CreateAppointmentForm>({
-    doctorId: '',
+    specialistId: '',
     patientId: '',
     patientName: '',
     patientEmail: '',
@@ -169,7 +171,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       // Fetch stats, doctors, appointments and patients
       const [statsRes, appointmentsRes, patientsRes] = await Promise.all([
         fetch('/api/admin/stats'),
-        fetch(`/api/admin/appointments?page=${currentPage}&search=${encodeURIComponent(search)}&status=${statusFilter}&doctorId=${doctorFilter}&startDate=${dateFromFilter}&endDate=${dateToFilter}`),
+        fetch(`/api/admin/appointments?page=${currentPage}&search=${encodeURIComponent(search)}&status=${statusFilter}&specialistId=${specialistFilter}&startDate=${dateFromFilter}&endDate=${dateToFilter}`),
         fetch('/api/admin/patients')
       ])
 
@@ -224,7 +226,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     testDateFormatting('2024-02-29')
     
     fetchData()
-  }, [currentPage, search, statusFilter, doctorFilter, dateFromFilter, dateToFilter])
+  }, [currentPage, search, statusFilter, specialistFilter, dateFromFilter, dateToFilter])
 
   const handleLogout = async () => {
     try {
@@ -256,9 +258,9 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   }
 
   // Nuevas funciones para CRUD completo
-  const fetchAvailableTimes = async (doctorId: string, date: string) => {
+  const fetchAvailableTimes = async (specialistId: string, date: string) => {
     try {
-      const response = await fetch(`/api/admin/available-times?doctorId=${doctorId}&date=${date}`)
+      const response = await fetch(`/api/admin/available-times?specialistId=${specialistId}&date=${date}`)
       if (response.ok) {
         const data = await response.json()
         setAvailableTimes(data.availableTimes)
@@ -272,7 +274,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   }
 
   const handleCreateAppointment = async () => {
-    if (!appointmentForm.doctorId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
+    if (!appointmentForm.specialistId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
       alert('Por favor completa todos los campos obligatorios')
       return
     }
@@ -306,7 +308,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          doctorId: appointmentForm.doctorId,
+          specialistId: appointmentForm.specialistId,
           patientId: patientId,
           appointmentDate: appointmentForm.appointmentDate,
           appointmentTime: appointmentForm.appointmentTime,
@@ -331,7 +333,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   }
 
   const handleEditAppointment = async () => {
-    if (!editingAppointment || !appointmentForm.doctorId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
+    if (!editingAppointment || !appointmentForm.specialistId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
       alert('Por favor completa todos los campos obligatorios')
       return
     }
@@ -343,7 +345,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           appointmentId: editingAppointment.id,
-          doctorId: appointmentForm.doctorId,
+          specialistId: appointmentForm.specialistId,
           patientId: appointmentForm.patientId,
           appointmentDate: appointmentForm.appointmentDate,
           appointmentTime: appointmentForm.appointmentTime,
@@ -403,7 +405,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   const openEditModal = (appointment: AppointmentData) => {
     setEditingAppointment(appointment)
     setAppointmentForm({
-      doctorId: appointment.doctor.id,
+      specialistId: appointment.specialist.id,
       patientId: appointment.patient.id,
       patientName: appointment.patient.name,
       patientEmail: appointment.patient.email,
@@ -412,8 +414,8 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       appointmentTime: appointment.appointment_time,
       notes: appointment.notes || ''
     })
-    // Fetch available times for the selected doctor and date
-    fetchAvailableTimes(appointment.doctor.id, appointment.appointment_date)
+    // Fetch available times for the selected specialist and date
+    fetchAvailableTimes(appointment.specialist.id, appointment.appointment_date)
     setShowEditModal(true)
   }
 
@@ -424,7 +426,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
 
   const resetForm = () => {
     setAppointmentForm({
-      doctorId: '',
+      specialistId: '',
       patientId: '',
       patientName: '',
       patientEmail: '',
@@ -443,13 +445,13 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       [field]: value
     }))
 
-    // If doctor or date changes, fetch available times
-    if (field === 'doctorId' || field === 'appointmentDate') {
-      const doctorId = field === 'doctorId' ? value : appointmentForm.doctorId
+    // If specialist or date changes, fetch available times
+    if (field === 'specialistId' || field === 'appointmentDate') {
+      const specialistId = field === 'specialistId' ? value : appointmentForm.specialistId
       const date = field === 'appointmentDate' ? value : appointmentForm.appointmentDate
       
-      if (doctorId && date) {
-        fetchAvailableTimes(doctorId, date)
+      if (specialistId && date) {
+        fetchAvailableTimes(specialistId, date)
       } else {
         setAvailableTimes([])
       }
@@ -661,14 +663,14 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                 </select>
                 
                 <select
-                  value={doctorFilter}
-                  onChange={(e) => setDoctorFilter(e.target.value)}
+                  value={specialistFilter}
+                  onChange={(e) => setSpecialistFilter(e.target.value)}
                   className="px-4 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
                 >
-                  <option value="">Todos los médicos</option>
-                  {doctors.map((doctor) => (
-                    <option key={doctor.id} value={doctor.id}>
-                      Dr. {doctor.name}
+                  <option value="">Todos los especialistas</option>
+                  {doctors.map((specialist) => (
+                    <option key={specialist.id} value={specialist.id}>
+                      {specialist.name}
                     </option>
                   ))}
                 </select>
@@ -767,12 +769,12 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div>
-                        <div className="font-medium">Dr. {appointment.doctor.name}</div>
-                        <div className="text-gray-500">{appointment.doctor.email}</div>
+                        <div className="font-medium">{appointment.specialist.name}</div>
+                        <div className="text-gray-500">{appointment.specialist.email}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {appointment.doctor.specialty.name}
+                      {appointment.service.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(appointment.status)}
@@ -930,15 +932,15 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Doctor</label>
                       <select
-                        value={appointmentForm.doctorId}
-                        onChange={(e) => handleFormChange('doctorId', e.target.value)}
+                        value={appointmentForm.specialistId}
+                        onChange={(e) => handleFormChange('specialistId', e.target.value)}
                         className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
                         required
                       >
-                        <option value="">Seleccionar doctor...</option>
-                        {doctors.map((doctor) => (
-                          <option key={doctor.id} value={doctor.id}>
-                            Dr. {doctor.name} - {doctor.specialty.name}
+                        <option value="">Seleccionar especialista...</option>
+                        {doctors.map((specialist) => (
+                          <option key={specialist.id} value={specialist.id}>
+                            {specialist.name} - {specialist.title}
                           </option>
                         ))}
                       </select>
@@ -1111,15 +1113,15 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Doctor</label>
                       <select
-                        value={appointmentForm.doctorId}
-                        onChange={(e) => handleFormChange('doctorId', e.target.value)}
+                        value={appointmentForm.specialistId}
+                        onChange={(e) => handleFormChange('specialistId', e.target.value)}
                         className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
                         required
                       >
-                        <option value="">Seleccionar doctor...</option>
-                        {doctors.map((doctor) => (
-                          <option key={doctor.id} value={doctor.id}>
-                            Dr. {doctor.name} - {doctor.specialty.name}
+                        <option value="">Seleccionar especialista...</option>
+                        {doctors.map((specialist) => (
+                          <option key={specialist.id} value={specialist.id}>
+                            {specialist.name} - {specialist.title}
                           </option>
                         ))}
                       </select>
@@ -1240,7 +1242,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                             Paciente: {deletingAppointment.patient.name}
                           </p>
                           <p className="text-sm text-red-700">
-                            Doctor: Dr. {deletingAppointment.doctor.name}
+                            Especialista: {deletingAppointment.specialist.name}
                           </p>
                           <p className="text-sm text-red-700">
                             Fecha: {formatYmdStatic(deletingAppointment.appointment_date)} a las {deletingAppointment.appointment_time}

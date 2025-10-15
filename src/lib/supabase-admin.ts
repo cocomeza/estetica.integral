@@ -39,14 +39,18 @@ export interface AppointmentWithDetails {
   status: 'scheduled' | 'completed' | 'cancelled'
   notes?: string
   created_at: string
-  doctor: {
+  specialist: {
     id: string
     name: string
     email: string
     phone: string
-    specialty: {
-      name: string
-    }
+    title: string
+  }
+  service: {
+    id: string
+    name: string
+    description: string
+    duration: number
   }
   patient: {
     id: string
@@ -88,12 +92,18 @@ export async function getAppointmentsForAdmin({
       status,
       notes,
       created_at,
-      doctor:doctors(
+      specialist:specialists(
         id,
         name,
         email,
         phone,
-        specialty:specialties(name)
+        title
+      ),
+      service:aesthetic_services(
+        id,
+        name,
+        description,
+        duration
       ),
       patient:patients(
         id,
@@ -114,7 +124,7 @@ export async function getAppointmentsForAdmin({
     query = query.eq('status', status)
   }
   if (doctorId) {
-    query = query.eq('doctor_id', doctorId)
+    query = query.eq('specialist_id', doctorId)
   }
 
   // Búsqueda de texto (primero buscar pacientes que coincidan)
@@ -144,7 +154,7 @@ export async function getAppointmentsForAdmin({
     query = query.order('appointment_date', { ascending: sortOrder === 'asc' })
     query = query.order('appointment_time', { ascending: sortOrder === 'asc' })
   } else if (sortBy === 'doctor') {
-    query = query.order('name', { foreignTable: 'doctors', ascending: sortOrder === 'asc' })
+    query = query.order('name', { foreignTable: 'specialists', ascending: sortOrder === 'asc' })
   } else if (sortBy === 'patient') {
     query = query.order('name', { foreignTable: 'patients', ascending: sortOrder === 'asc' })
   } else {
@@ -191,18 +201,18 @@ export async function updateAppointmentStatus(appointmentId: string, status: 'sc
 
 export async function getDoctorsForAdmin() {
   const { data, error } = await supabaseAdmin
-    .from('doctors')
+    .from('specialists')
     .select(`
       id,
       name,
       email,
-      specialty:specialties(name)
+      title
     `)
     .eq('is_active', true)
     .order('name')
 
   if (error) {
-    console.error('Error fetching doctors for admin:', error)
+    console.error('Error fetching specialists for admin:', error)
     throw error
   }
 
@@ -258,7 +268,7 @@ export async function createAppointmentForAdmin(appointmentData: CreateAppointme
   const { data: existingAppointment } = await supabaseAdmin
     .from('appointments')
     .select('id')
-    .eq('doctor_id', appointmentData.doctorId)
+    .eq('specialist_id', appointmentData.doctorId)
     .eq('appointment_date', appointmentData.appointmentDate)
     .eq('appointment_time', appointmentData.appointmentTime)
     .neq('status', 'cancelled')
@@ -271,7 +281,7 @@ export async function createAppointmentForAdmin(appointmentData: CreateAppointme
   const { data, error } = await supabaseAdmin
     .from('appointments')
     .insert([{
-      doctor_id: appointmentData.doctorId,
+      specialist_id: appointmentData.doctorId,
       patient_id: appointmentData.patientId,
       appointment_date: appointmentData.appointmentDate,
       appointment_time: appointmentData.appointmentTime,
@@ -285,12 +295,18 @@ export async function createAppointmentForAdmin(appointmentData: CreateAppointme
       status,
       notes,
       created_at,
-      doctor:doctors(
+      specialist:specialists(
         id,
         name,
         email,
         phone,
-        specialty:specialties(name)
+        title
+      ),
+      service:aesthetic_services(
+        id,
+        name,
+        description,
+        duration
       ),
       patient:patients(
         id,
@@ -315,7 +331,7 @@ export async function updateAppointmentForAdmin(appointmentId: string, updateDat
     const { data: existingAppointment } = await supabaseAdmin
       .from('appointments')
       .select('id')
-      .eq('doctor_id', updateData.doctorId)
+      .eq('specialist_id', updateData.doctorId)
       .eq('appointment_date', updateData.appointmentDate)
       .eq('appointment_time', updateData.appointmentTime)
       .neq('status', 'cancelled')
@@ -329,7 +345,7 @@ export async function updateAppointmentForAdmin(appointmentId: string, updateDat
 
   const updateObject: any = {}
   
-  if (updateData.doctorId) updateObject.doctor_id = updateData.doctorId
+  if (updateData.doctorId) updateObject.specialist_id = updateData.doctorId
   if (updateData.patientId) updateObject.patient_id = updateData.patientId
   if (updateData.appointmentDate) updateObject.appointment_date = updateData.appointmentDate
   if (updateData.appointmentTime) updateObject.appointment_time = updateData.appointmentTime
@@ -347,12 +363,18 @@ export async function updateAppointmentForAdmin(appointmentId: string, updateDat
       status,
       notes,
       created_at,
-      doctor:doctors(
+      specialist:specialists(
         id,
         name,
         email,
         phone,
-        specialty:specialties(name)
+        title
+      ),
+      service:aesthetic_services(
+        id,
+        name,
+        description,
+        duration
       ),
       patient:patients(
         id,
@@ -428,13 +450,13 @@ export async function createPatientForAdmin(patientData: { name: string; email: 
 }
 
 export async function getAvailableTimesForAdmin(doctorId: string, date: string) {
-  // Obtener horario del médico para ese día usando función centralizada
+  // Obtener horario del especialista para ese día usando función centralizada
   const dayOfWeek = getDayOfWeek(date)
   
   const { data: schedule } = await supabaseAdmin
-    .from('doctor_schedules')
+    .from('work_schedules')
     .select('start_time, end_time')
-    .eq('doctor_id', doctorId)
+    .eq('specialist_id', doctorId)
     .eq('day_of_week', dayOfWeek)
     .single()
 
@@ -446,7 +468,7 @@ export async function getAvailableTimesForAdmin(doctorId: string, date: string) 
   const { data: existingAppointments } = await supabaseAdmin
     .from('appointments')
     .select('appointment_time')
-    .eq('doctor_id', doctorId)
+    .eq('specialist_id', doctorId)
     .eq('appointment_date', date)
     .neq('status', 'cancelled')
 
