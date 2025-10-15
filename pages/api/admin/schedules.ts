@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { verifyAuth } from '../../../src/lib/admin-auth'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -11,12 +10,9 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  try {
-    const adminUser = await verifyAuth(req)
-    if (!adminUser) {
-      return res.status(401).json({ error: 'No autorizado' })
-    }
+  // La autenticación se maneja en el middleware
 
+  try {
     switch (req.method) {
       case 'GET':
         return handleGet(req, res)
