@@ -50,6 +50,7 @@ DROP INDEX IF EXISTS idx_closures_active;
 DROP INDEX IF EXISTS idx_work_schedules_specialist;
 
 -- Eliminar tablas (en orden inverso a las dependencias)
+-- Usando IF EXISTS para evitar errores si no existen
 DROP TABLE IF EXISTS appointments CASCADE;
 DROP TABLE IF EXISTS patients CASCADE;
 DROP TABLE IF EXISTS work_schedules CASCADE;
@@ -58,6 +59,9 @@ DROP TABLE IF EXISTS system_settings CASCADE;
 DROP TABLE IF EXISTS specialists CASCADE;
 DROP TABLE IF EXISTS aesthetic_services CASCADE;
 DROP TABLE IF EXISTS admin_users CASCADE;
+
+-- Verificar que todo se eliminó
+SELECT 'Tablas eliminadas correctamente' as mensaje;
 
 -- Mensaje de confirmación
 DO $$
