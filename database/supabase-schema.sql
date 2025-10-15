@@ -75,9 +75,36 @@ CREATE TABLE work_schedules (
   lunch_end TIME, -- hora de fin de almuerzo
   allowed_services UUID[], -- servicios permitidos en este día (NULL = todos)
   is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   
   -- Un horario por día por especialista
   UNIQUE(specialist_id, day_of_week)
+);
+
+-- Tabla de cierres y vacaciones
+CREATE TABLE closures (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  specialist_id UUID NOT NULL REFERENCES specialists(id) ON DELETE CASCADE,
+  closure_type VARCHAR(20) NOT NULL CHECK (closure_type IN ('vacation', 'holiday', 'personal', 'maintenance')),
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  reason TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  
+  -- Validar que la fecha de fin sea posterior o igual a la de inicio
+  CHECK (end_date >= start_date)
+);
+
+-- Tabla de configuración del sistema
+CREATE TABLE system_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  setting_key VARCHAR(100) UNIQUE NOT NULL,
+  setting_value TEXT NOT NULL,
+  description TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Tabla de administradores
@@ -100,6 +127,10 @@ CREATE INDEX idx_appointments_datetime ON appointments(appointment_date, appoint
 CREATE INDEX idx_patients_email ON patients(email);
 CREATE INDEX idx_services_category ON aesthetic_services(category);
 CREATE INDEX idx_services_active ON aesthetic_services(is_active);
+CREATE INDEX idx_closures_dates ON closures(start_date, end_date);
+CREATE INDEX idx_closures_specialist ON closures(specialist_id);
+CREATE INDEX idx_closures_active ON closures(is_active);
+CREATE INDEX idx_work_schedules_specialist ON work_schedules(specialist_id);
 
 -- Triggers para actualizar timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -115,6 +146,9 @@ CREATE TRIGGER update_specialists_updated_at BEFORE UPDATE ON specialists FOR EA
 CREATE TRIGGER update_patients_updated_at BEFORE UPDATE ON patients FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_appointments_updated_at BEFORE UPDATE ON appointments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_admin_users_updated_at BEFORE UPDATE ON admin_users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_work_schedules_updated_at BEFORE UPDATE ON work_schedules FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_closures_updated_at BEFORE UPDATE ON closures FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_system_settings_updated_at BEFORE UPDATE ON system_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Insertar servicios estéticos por defecto
 INSERT INTO aesthetic_services (name, description, duration, category) VALUES
@@ -156,6 +190,8 @@ ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE work_schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE closures ENABLE ROW LEVEL SECURITY;
+ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
 
 -- Políticas para servicios estéticos (lectura pública, escritura solo admin)
 CREATE POLICY "Services are viewable by everyone" ON aesthetic_services FOR SELECT USING (true);
@@ -177,6 +213,14 @@ CREATE POLICY "Appointments are private" ON appointments FOR ALL USING (auth.rol
 
 -- Políticas para administradores (solo acceso de service role)
 CREATE POLICY "Admin users are private" ON admin_users FOR ALL USING (auth.role() = 'service_role');
+
+-- Políticas para cierres (lectura pública de activos, escritura solo admin)
+CREATE POLICY "Active closures are viewable by everyone" ON closures FOR SELECT USING (is_active = true);
+CREATE POLICY "Closures are editable by admins only" ON closures FOR ALL USING (auth.role() = 'service_role');
+
+-- Políticas para configuración del sistema (lectura pública, escritura solo admin)
+CREATE POLICY "System settings are viewable by everyone" ON system_settings FOR SELECT USING (true);
+CREATE POLICY "System settings are editable by admins only" ON system_settings FOR ALL USING (auth.role() = 'service_role');
 
 -- Crear vistas útiles
 CREATE VIEW active_services AS
@@ -201,11 +245,32 @@ COMMENT ON TABLE patients IS 'Clientes del centro de estética';
 COMMENT ON TABLE appointments IS 'Turnos agendados con servicios específicos';
 COMMENT ON TABLE work_schedules IS 'Horarios de trabajo por día de la semana';
 COMMENT ON TABLE admin_users IS 'Usuarios con acceso administrativo al sistema';
+COMMENT ON TABLE closures IS 'Periodos de cierre por vacaciones, feriados u otras razones';
+COMMENT ON TABLE system_settings IS 'Configuración general del sistema';
 
 COMMENT ON COLUMN appointments.duration IS 'Duración en minutos del servicio (copiado del servicio al crear el turno)';
 COMMENT ON COLUMN work_schedules.allowed_services IS 'Array de UUIDs de servicios permitidos en este día (NULL = todos los servicios)';
+COMMENT ON COLUMN closures.closure_type IS 'Tipo de cierre: vacation (vacaciones), holiday (feriado), personal (personal), maintenance (mantenimiento)';
 
 -- Funciones útiles
+
+-- Función para verificar si una fecha está cerrada
+CREATE OR REPLACE FUNCTION is_date_closed(
+  p_specialist_id UUID,
+  p_date DATE
+)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM closures
+    WHERE specialist_id = p_specialist_id
+      AND p_date BETWEEN start_date AND end_date
+      AND is_active = true
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+-- Función mejorada para obtener slots disponibles
 CREATE OR REPLACE FUNCTION get_available_slots(
   p_specialist_id UUID,
   p_date DATE,
@@ -215,7 +280,16 @@ RETURNS TABLE(time_slot TIME) AS $$
 DECLARE
   service_duration INTEGER;
   day_of_week INTEGER;
+  is_closed BOOLEAN;
 BEGIN
+  -- Verificar si la fecha está cerrada
+  is_closed := is_date_closed(p_specialist_id, p_date);
+  
+  -- Si está cerrado, no devolver slots
+  IF is_closed THEN
+    RETURN;
+  END IF;
+  
   -- Obtener duración del servicio
   SELECT duration INTO service_duration FROM aesthetic_services WHERE id = p_service_id;
   
@@ -227,7 +301,9 @@ BEGIN
     SELECT 
       (ws.start_time + (generate_series(0, 
         EXTRACT(EPOCH FROM (ws.end_time - ws.start_time))::integer / 1800 - 1
-      ) * INTERVAL '30 minutes'))::TIME as slot_time
+      ) * INTERVAL '30 minutes'))::TIME as slot_time,
+      ws.lunch_start,
+      ws.lunch_end
     FROM work_schedules ws
     WHERE ws.specialist_id = p_specialist_id
       AND ws.day_of_week = day_of_week
@@ -236,13 +312,18 @@ BEGIN
   )
   SELECT ts.slot_time
   FROM time_slots ts
-  WHERE NOT EXISTS (
-    SELECT 1 FROM appointments a
-    WHERE a.specialist_id = p_specialist_id
-      AND a.appointment_date = p_date
-      AND a.appointment_time = ts.slot_time
-      AND a.status != 'cancelled'
-  )
+  WHERE 
+    -- Excluir horario de almuerzo si existe
+    (ts.lunch_start IS NULL OR ts.lunch_end IS NULL OR 
+     NOT (ts.slot_time >= ts.lunch_start AND ts.slot_time < ts.lunch_end))
+    -- Excluir slots ya ocupados
+    AND NOT EXISTS (
+      SELECT 1 FROM appointments a
+      WHERE a.specialist_id = p_specialist_id
+        AND a.appointment_date = p_date
+        AND a.appointment_time = ts.slot_time
+        AND a.status != 'cancelled'
+    )
   ORDER BY ts.slot_time;
 END;
 $$ LANGUAGE plpgsql;

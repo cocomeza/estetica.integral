@@ -19,7 +19,9 @@ import {
   Edit,
   Trash2,
   X,
-  Save
+  Save,
+  Settings,
+  CalendarX
 } from 'lucide-react'
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
@@ -28,10 +30,14 @@ import 'react-datepicker/dist/react-datepicker.css'
 import type { AdminUser } from '../../../lib/admin-auth'
 import { formatDateForDisplay, getTodayString, fixDateFromDatabase, debugDateProblem } from '../../../lib/date-utils'
 import { debugDateIssues, testDateFormatting } from '../../../lib/debug-dates-browser'
+import ScheduleManager from './ScheduleManager'
+import ClosureManager from './ClosureManager'
 
 interface AdminDashboardProps {
   adminUser: AdminUser
 }
+
+type TabType = 'appointments' | 'schedules' | 'closures'
 
 interface AppointmentData {
   id: string
@@ -92,12 +98,14 @@ interface CreateAppointmentForm {
 }
 
 export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
+  const [activeTab, setActiveTab] = useState<TabType>('appointments')
   const [appointments, setAppointments] = useState<AppointmentData[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, today: 0, scheduled: 0, completed: 0 })
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [specialistId, setSpecialistId] = useState<string>('')
   
   // Filtros
   const [search, setSearch] = useState('')
@@ -175,6 +183,11 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
 
       setStats(statsData.stats)
       setDoctors(statsData.doctors)
+      
+      // Obtener el ID del primer especialista para gestión de horarios
+      if (statsData.doctors && statsData.doctors.length > 0) {
+        setSpecialistId(statsData.doctors[0].id)
+      }
       
       // Depurar las fechas que vienen de la API
       console.log('📊 Datos de citas recibidos:', appointmentsData.appointments)
@@ -516,8 +529,54 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
           </div>
         )}
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* Tabs Navigation */}
+        <div className="mb-6 border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('appointments')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'appointments'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center">
+                <Calendar className="h-5 w-5 mr-2" />
+                Turnos
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('schedules')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'schedules'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center">
+                <Clock className="h-5 w-5 mr-2" />
+                Horarios
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('closures')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'closures'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center">
+                <CalendarX className="h-5 w-5 mr-2" />
+                Cierres / Vacaciones
+              </div>
+            </button>
+          </nav>
+        </div>
+
+        {/* Stats Cards - Solo mostrar en pestaña de turnos */}
+        {activeTab === 'appointments' && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -566,9 +625,13 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
             </div>
           </div>
         </div>
+        )}
 
-        {/* Filters and Actions */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        {/* Content Based on Active Tab */}
+        {activeTab === 'appointments' && (
+          <>
+            {/* Filters and Actions */}
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <div className="flex flex-col gap-4">
             {/* Primera fila: Búsqueda y filtros básicos */}
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
@@ -817,6 +880,18 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
             </div>
           )}
         </div>
+          </>
+        )}
+
+        {/* Schedule Management Tab */}
+        {activeTab === 'schedules' && specialistId && (
+          <ScheduleManager specialistId={specialistId} />
+        )}
+
+        {/* Closure Management Tab */}
+        {activeTab === 'closures' && specialistId && (
+          <ClosureManager specialistId={specialistId} />
+        )}
       </main>
 
       {/* Modal para Crear Nueva Cita */}

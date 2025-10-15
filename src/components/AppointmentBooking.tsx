@@ -99,10 +99,26 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
       dateString 
     })
     
+    // Verificar si hay cierres para esa fecha
+    const { data: closures } = await supabase
+      .from('closures')
+      .select('*')
+      .eq('specialist_id', specialist.id)
+      .eq('is_active', true)
+      .lte('start_date', dateString)
+      .gte('end_date', dateString)
+
+    if (closures && closures.length > 0) {
+      console.log('❌ Fecha cerrada:', closures[0].reason)
+      setAvailableTimes([])
+      setError(`No hay atención disponible: ${closures[0].reason || 'Cerrado'}`)
+      return
+    }
+    
     // Obtener horario del especialista para ese día
     const { data: schedule } = await supabase
       .from('work_schedules')
-      .select('start_time, end_time, allowed_services')
+      .select('start_time, end_time, allowed_services, lunch_start, lunch_end')
       .eq('specialist_id', specialist.id)
       .eq('day_of_week', dayOfWeek)
       .eq('is_active', true)
@@ -142,12 +158,26 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
     let currentTime = setMinutes(setHours(new Date(localDate), startHour), startMin)
     const endTime = setMinutes(setHours(new Date(localDate), endHour), endMin)
     
+    // Obtener horario de almuerzo si existe
+    let lunchStart = null
+    let lunchEnd = null
+    if (schedule.lunch_start && schedule.lunch_end) {
+      const [lunchStartHour, lunchStartMin] = schedule.lunch_start.split(':').map(Number)
+      const [lunchEndHour, lunchEndMin] = schedule.lunch_end.split(':').map(Number)
+      lunchStart = setMinutes(setHours(new Date(localDate), lunchStartHour), lunchStartMin)
+      lunchEnd = setMinutes(setHours(new Date(localDate), lunchEndHour), lunchEndMin)
+    }
+    
     // Usar la duración del servicio para los intervalos
     const intervalMinutes = service.duration
     
     while (currentTime < endTime) {
       const timeString = format(currentTime, 'HH:mm')
-      if (!bookedTimes.includes(timeString)) {
+      
+      // Excluir horario de almuerzo
+      const isLunchTime = lunchStart && lunchEnd && currentTime >= lunchStart && currentTime < lunchEnd
+      
+      if (!bookedTimes.includes(timeString) && !isLunchTime) {
         times.push(timeString)
       }
       currentTime = addMinutes(currentTime, intervalMinutes)
@@ -155,6 +185,9 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
 
     console.log('✅ Horarios disponibles:', times)
     setAvailableTimes(times)
+    
+    // Limpiar error si había
+    if (error) setError(null)
   }, [selectedDate, specialist, service, serviceId])
 
   useEffect(() => {

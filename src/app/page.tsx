@@ -63,7 +63,6 @@ const mockServices: AestheticService[] = [
 export default function Home() {
   const [services, setServices] = useState<AestheticService[]>([])
   const [selectedService, setSelectedService] = useState<string | null>(null)
-  const [showSpecialist, setShowSpecialist] = useState(false)
   const [supabaseEnabled, setSupabaseEnabled] = useState(false)
 
   useEffect(() => {
@@ -103,122 +102,66 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-light via-white to-secondary/30">
       <header className="bg-white/95 backdrop-blur-sm shadow-lg border-b border-secondary">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          <div className="flex justify-between items-center py-3">
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
                 <img 
                   src="/images/logo-estetica-integral.png" 
                   alt="Estética Integral" 
-                  className="h-12 w-12 object-contain"
+                  className="h-10 w-10 object-contain"
                 />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  Centro de Estética Integral
+                <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  Estética Integral
                 </h1>
-                <p className="text-xs text-neutral font-medium">Lorena Esquivel - Esteticista Profesional</p>
+                <p className="text-xs text-neutral">Lorena Esquivel</p>
               </div>
             </div>
             <Link
               href="/admin"
-              className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-primary to-accent text-white text-sm font-medium rounded-lg hover:from-primary/90 hover:to-accent/90 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+              className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-primary to-accent text-white text-sm font-medium rounded-lg hover:from-primary/90 hover:to-accent/90 transition-all"
             >
-              <Settings className="h-4 w-4 mr-2" />
-              Panel Admin
+              <Settings className="h-4 w-4 mr-1" />
+              Admin
             </Link>
           </div>
         </div>
-        {!supabaseEnabled && (
-          <div className="bg-secondary border-l-4 border-primary p-3">
-            <div className="flex">
-              <div className="ml-3">
-                <p className="text-sm text-neutral">
-                  <span className="font-medium">Modo de demostración:</span> 
-                  {' '}Configurar Supabase para habilitar todas las funcionalidades.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Mensaje de bienvenida simple */}
+        {!selectedService && (
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Reservá tu turno</h2>
+            <p className="text-gray-600">Elegí el servicio que necesitás y reservá en minutos</p>
+          </div>
+        )}
+
         {!selectedService ? (
           <ServiceSelection 
             services={services}
             onSelectService={setSelectedService}
           />
-        ) : !showSpecialist ? (
-          <SpecialistInfo 
-            serviceId={selectedService}
-            onContinue={() => setShowSpecialist(true)}
-            onBack={() => setSelectedService(null)}
-          />
         ) : (
           <AppointmentBooking 
             serviceId={selectedService}
-            onBack={() => setShowSpecialist(false)}
+            onBack={() => setSelectedService(null)}
           />
         )}
       </main>
 
-      {/* Footer más compacto */}
-      <footer className="bg-white border-t border-secondary mt-12">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Información del centro */}
+      {/* Footer compacto y simple */}
+      <footer className="bg-white border-t border-gray-200 mt-8">
+        <div className="max-w-5xl mx-auto px-4 py-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3 text-sm text-gray-600">
             <div>
-              <h3 className="text-base font-semibold text-dark mb-3">Centro de Estética Integral</h3>
-              <div className="space-y-1 text-sm text-neutral">
-                <div className="flex items-center space-x-2">
-                  <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-                  <span>Lorena Esquivel - Esteticista Profesional</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-                  <span>Mat. 12345</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-                  <span>Av. Corrientes 1234, CABA</span>
-                </div>
-              </div>
+              <span className="font-medium">Lorena Esquivel</span> • Mat. 12345 • Av. Corrientes 1234, CABA
             </div>
-            
-            {/* Contacto */}
-            <div>
-              <h3 className="text-base font-semibold text-dark mb-3">Contacto</h3>
-              <div className="space-y-1 text-sm text-neutral">
-                <div className="flex items-center space-x-2">
-                  <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-                  <span>+54 11 1234-5678</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-                  <span>lorena@esteticaintegral.com.ar</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-                  <span>Lun-Vie: 09:00-18:00</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-                  <span>Sáb: 09:00-13:00 (Depilación)</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Desarrollo */}
-            <div>
-              <h3 className="text-base font-semibold text-dark mb-3">Desarrollo</h3>
-              <div className="text-center">
-                <small className="text-neutral">
-                  Desarrollado por{' '}
-                  <a href="https://botoncreativo.onrender.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-accent underline">
-                    Botón Creativo
-                  </a>
-                </small>
-              </div>
+            <div className="flex items-center gap-4">
+              <span>+54 11 1234-5678</span>
+              <span>•</span>
+              <span>Lun-Vie: 09:00-18:00</span>
             </div>
           </div>
         </div>
