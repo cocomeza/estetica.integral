@@ -69,12 +69,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
+      console.log('🔵 POST /api/appointments - Body recibido:', JSON.stringify(req.body, null, 2))
+      
       // Verificar si es una reserva pública (desde el frontend) o admin
       const { specialistId, serviceId, patientInfo, appointmentDate, appointmentTime, duration } = req.body
       
+      console.log('🔍 Verificando campos:', { 
+        hasSpecialistId: !!specialistId, 
+        hasServiceId: !!serviceId, 
+        hasPatientInfo: !!patientInfo,
+        patientInfo 
+      })
+      
       if (specialistId && serviceId && patientInfo) {
         // Reserva pública desde el frontend
-        console.log('📝 Creando reserva pública:', { specialistId, serviceId, patientInfo, appointmentDate, appointmentTime, duration })
+        console.log('✅ Es reserva pública - procesando...')
         
         if (!specialistId || !serviceId || !appointmentDate || !appointmentTime || !patientInfo?.name || !patientInfo?.email) {
           return res.status(400).json({ error: 'Especialista, servicio, fecha, hora y datos del paciente son requeridos' })
