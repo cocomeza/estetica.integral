@@ -292,8 +292,10 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
         },
         body: JSON.stringify({
           specialistId: specialist?.id,
+          serviceId: serviceId,
           appointmentDate: formatDateForAPI(selectedDate),
           appointmentTime: selectedTime,
+          duration: service?.duration || 45,
           patientInfo: normalizedPatientInfo
         })
       })
