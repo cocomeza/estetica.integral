@@ -65,10 +65,10 @@ export interface AdminAppointmentsFilter {
   startDate?: string
   endDate?: string
   status?: string
-  doctorId?: string
+  specialistId?: string
   page?: number
   limit?: number
-  sortBy?: 'date' | 'doctor' | 'patient'
+  sortBy?: 'date' | 'specialist' | 'patient'
   sortOrder?: 'asc' | 'desc'
 }
 
@@ -77,7 +77,7 @@ export async function getAppointmentsForAdmin({
   startDate,
   endDate,
   status,
-  doctorId,
+  specialistId,
   page = 1,
   limit = 10,
   sortBy = 'date',
@@ -123,8 +123,8 @@ export async function getAppointmentsForAdmin({
   if (status && status !== 'all') {
     query = query.eq('status', status)
   }
-  if (doctorId) {
-    query = query.eq('specialist_id', doctorId)
+  if (specialistId) {
+    query = query.eq('specialist_id', specialistId)
   }
 
   // Búsqueda de texto (primero buscar pacientes que coincidan)
@@ -153,7 +153,7 @@ export async function getAppointmentsForAdmin({
   if (sortBy === 'date') {
     query = query.order('appointment_date', { ascending: sortOrder === 'asc' })
     query = query.order('appointment_time', { ascending: sortOrder === 'asc' })
-  } else if (sortBy === 'doctor') {
+  } else if (sortBy === 'specialist') {
     query = query.order('name', { foreignTable: 'specialists', ascending: sortOrder === 'asc' })
   } else if (sortBy === 'patient') {
     query = query.order('name', { foreignTable: 'patients', ascending: sortOrder === 'asc' })
@@ -246,7 +246,7 @@ export async function getAppointmentStats() {
 // Nuevas funciones para CRUD completo de citas
 
 export interface CreateAppointmentData {
-  doctorId: string
+  specialistId: string
   patientId: string
   appointmentDate: string
   appointmentTime: string
@@ -255,7 +255,7 @@ export interface CreateAppointmentData {
 }
 
 export interface UpdateAppointmentData {
-  doctorId?: string
+  specialistId?: string
   patientId?: string
   appointmentDate?: string
   appointmentTime?: string
@@ -268,7 +268,7 @@ export async function createAppointmentForAdmin(appointmentData: CreateAppointme
   const { data: existingAppointment } = await supabaseAdmin
     .from('appointments')
     .select('id')
-    .eq('specialist_id', appointmentData.doctorId)
+    .eq('specialist_id', appointmentData.specialistId)
     .eq('appointment_date', appointmentData.appointmentDate)
     .eq('appointment_time', appointmentData.appointmentTime)
     .neq('status', 'cancelled')
@@ -281,7 +281,7 @@ export async function createAppointmentForAdmin(appointmentData: CreateAppointme
   const { data, error } = await supabaseAdmin
     .from('appointments')
     .insert([{
-      specialist_id: appointmentData.doctorId,
+      specialist_id: appointmentData.specialistId,
       patient_id: appointmentData.patientId,
       appointment_date: appointmentData.appointmentDate,
       appointment_time: appointmentData.appointmentTime,
@@ -326,12 +326,12 @@ export async function createAppointmentForAdmin(appointmentData: CreateAppointme
 }
 
 export async function updateAppointmentForAdmin(appointmentId: string, updateData: UpdateAppointmentData) {
-  // Si se está cambiando fecha/hora/doctor, verificar disponibilidad
-  if (updateData.doctorId && updateData.appointmentDate && updateData.appointmentTime) {
+  // Si se está cambiando fecha/hora/especialista, verificar disponibilidad
+  if (updateData.specialistId && updateData.appointmentDate && updateData.appointmentTime) {
     const { data: existingAppointment } = await supabaseAdmin
       .from('appointments')
       .select('id')
-      .eq('specialist_id', updateData.doctorId)
+      .eq('specialist_id', updateData.specialistId)
       .eq('appointment_date', updateData.appointmentDate)
       .eq('appointment_time', updateData.appointmentTime)
       .neq('status', 'cancelled')
@@ -345,7 +345,7 @@ export async function updateAppointmentForAdmin(appointmentId: string, updateDat
 
   const updateObject: any = {}
   
-  if (updateData.doctorId) updateObject.specialist_id = updateData.doctorId
+  if (updateData.specialistId) updateObject.specialist_id = updateData.specialistId
   if (updateData.patientId) updateObject.patient_id = updateData.patientId
   if (updateData.appointmentDate) updateObject.appointment_date = updateData.appointmentDate
   if (updateData.appointmentTime) updateObject.appointment_time = updateData.appointmentTime
@@ -449,14 +449,14 @@ export async function createPatientForAdmin(patientData: { name: string; email: 
   return data
 }
 
-export async function getAvailableTimesForAdmin(doctorId: string, date: string) {
+export async function getAvailableTimesForAdmin(specialistId: string, date: string) {
   // Obtener horario del especialista para ese día usando función centralizada
   const dayOfWeek = getDayOfWeek(date)
   
   const { data: schedule } = await supabaseAdmin
     .from('work_schedules')
     .select('start_time, end_time')
-    .eq('specialist_id', doctorId)
+    .eq('specialist_id', specialistId)
     .eq('day_of_week', dayOfWeek)
     .single()
 
@@ -468,7 +468,7 @@ export async function getAvailableTimesForAdmin(doctorId: string, date: string) 
   const { data: existingAppointments } = await supabaseAdmin
     .from('appointments')
     .select('appointment_time')
-    .eq('specialist_id', doctorId)
+    .eq('specialist_id', specialistId)
     .eq('appointment_date', date)
     .neq('status', 'cancelled')
 
