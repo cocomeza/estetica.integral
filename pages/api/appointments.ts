@@ -107,14 +107,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         })
       } else {
         // Reserva desde admin (formato anterior)
-        const { specialistId, patientId, appointmentDate, appointmentTime, status, notes } = req.body
+        const { specialistId, serviceId, patientId, appointmentDate, appointmentTime, status, notes } = req.body
 
-        if (!specialistId || !patientId || !appointmentDate || !appointmentTime) {
-          return res.status(400).json({ error: 'Especialista, paciente, fecha y hora son requeridos' })
+        if (!specialistId || !serviceId || !patientId || !appointmentDate || !appointmentTime) {
+          return res.status(400).json({ error: 'Especialista, servicio, paciente, fecha y hora son requeridos' })
         }
 
         const newAppointment = await createAppointmentForAdmin({
           specialistId,
+          serviceId,
           patientId,
           appointmentDate,
           appointmentTime,
@@ -135,7 +136,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'PUT') {
     try {
-      const { appointmentId, specialistId, patientId, appointmentDate, appointmentTime, status, notes } = req.body
+      const { appointmentId, specialistId, serviceId, patientId, appointmentDate, appointmentTime, status, notes } = req.body
 
       if (!appointmentId) {
         return res.status(400).json({ error: 'ID de cita requerido' })
@@ -143,6 +144,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const updatedAppointment = await updateAppointmentForAdmin(appointmentId, {
         specialistId,
+        serviceId,
         patientId,
         appointmentDate,
         appointmentTime,
