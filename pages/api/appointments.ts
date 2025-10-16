@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         startDate,
         endDate,
         status,
-        doctorId,
+        specialistId,
         page = '1',
         limit = '10',
         sortBy = 'date',
@@ -29,10 +29,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         startDate: startDate as string,
         endDate: endDate as string,
         status: status as string,
-        doctorId: doctorId as string,
+        specialistId: specialistId as string,
         page: parseInt(page as string),
         limit: parseInt(limit as string),
-        sortBy: sortBy as 'date' | 'doctor' | 'patient',
+        sortBy: sortBy as 'date' | 'specialist' | 'patient',
         sortOrder: sortOrder as 'asc' | 'desc'
       }
 
@@ -107,14 +107,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         })
       } else {
         // Reserva desde admin (formato anterior)
-        const { doctorId, patientId, appointmentDate, appointmentTime, status, notes } = req.body
+        const { specialistId, patientId, appointmentDate, appointmentTime, status, notes } = req.body
 
-        if (!doctorId || !patientId || !appointmentDate || !appointmentTime) {
-          return res.status(400).json({ error: 'Doctor, paciente, fecha y hora son requeridos' })
+        if (!specialistId || !patientId || !appointmentDate || !appointmentTime) {
+          return res.status(400).json({ error: 'Especialista, paciente, fecha y hora son requeridos' })
         }
 
         const newAppointment = await createAppointmentForAdmin({
-          doctorId,
+          specialistId,
           patientId,
           appointmentDate,
           appointmentTime,
@@ -135,14 +135,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'PUT') {
     try {
-      const { appointmentId, doctorId, patientId, appointmentDate, appointmentTime, status, notes } = req.body
+      const { appointmentId, specialistId, patientId, appointmentDate, appointmentTime, status, notes } = req.body
 
       if (!appointmentId) {
         return res.status(400).json({ error: 'ID de cita requerido' })
       }
 
       const updatedAppointment = await updateAppointmentForAdmin(appointmentId, {
-        doctorId,
+        specialistId,
         patientId,
         appointmentDate,
         appointmentTime,
