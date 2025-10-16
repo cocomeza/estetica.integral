@@ -9,14 +9,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // La autenticación se maneja en el middleware
 
   try {
-    const [stats, doctors] = await Promise.all([
+    const [stats, specialists] = await Promise.all([
       getAppointmentStats(),
       getDoctorsForAdmin()
     ])
 
     return res.status(200).json({
       stats,
-      doctors
+      specialists
     })
   } catch (error) {
     console.error('Error fetching admin stats:', error)

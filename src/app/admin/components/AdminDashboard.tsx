@@ -103,7 +103,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState<TabType>('appointments')
   const [appointments, setAppointments] = useState<AppointmentData[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, today: 0, scheduled: 0, completed: 0 })
-  const [doctors, setDoctors] = useState<Doctor[]>([])
+  const [specialists, setSpecialists] = useState<Doctor[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -168,7 +168,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     try {
       setLoading(true)
       
-      // Fetch stats, doctors, appointments and patients
+      // Fetch stats, specialists, appointments and patients
       const [statsRes, appointmentsRes, patientsRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch(`/api/admin/appointments?page=${currentPage}&search=${encodeURIComponent(search)}&status=${statusFilter}&specialistId=${specialistFilter}&startDate=${dateFromFilter}&endDate=${dateToFilter}`),
@@ -184,11 +184,11 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       const patientsData = await patientsRes.json()
 
       setStats(statsData.stats)
-      setDoctors(statsData.doctors)
+      setSpecialists(statsData.specialists)
       
       // Obtener el ID del primer especialista para gestión de horarios
-      if (statsData.doctors && statsData.doctors.length > 0) {
-        setSpecialistId(statsData.doctors[0].id)
+      if (statsData.specialists && statsData.specialists.length > 0) {
+        setSpecialistId(statsData.specialists[0].id)
       }
       
       // Depurar las fechas que vienen de la API
@@ -668,7 +668,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                   className="px-4 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">Todos los especialistas</option>
-                  {doctors.map((specialist) => (
+                  {specialists.map((specialist) => (
                     <option key={specialist.id} value={specialist.id}>
                       {specialist.name}
                     </option>
@@ -938,7 +938,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                         required
                       >
                         <option value="">Seleccionar especialista...</option>
-                        {doctors.map((specialist) => (
+                        {specialists.map((specialist) => (
                           <option key={specialist.id} value={specialist.id}>
                             {specialist.name} - {specialist.title}
                           </option>
@@ -1119,7 +1119,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                         required
                       >
                         <option value="">Seleccionar especialista...</option>
-                        {doctors.map((specialist) => (
+                        {specialists.map((specialist) => (
                           <option key={specialist.id} value={specialist.id}>
                             {specialist.name} - {specialist.title}
                           </option>
