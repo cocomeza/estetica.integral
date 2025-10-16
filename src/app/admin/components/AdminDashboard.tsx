@@ -478,7 +478,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      scheduled: 'bg-blue-100 text-blue-800',
+      scheduled: 'bg-pink-100 text-pink-800',
       completed: 'bg-green-100 text-green-800',
       cancelled: 'bg-red-100 text-red-800'
     }
@@ -677,7 +677,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                       placeholder="Buscar por paciente..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                      className="w-full pl-10 pr-4 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                     />
                   </div>
                 </div>
@@ -685,7 +685,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                  className="px-4 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                 >
                   <option value="all">Todos los estados</option>
                   <option value="scheduled">Programadas</option>
@@ -696,7 +696,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                 <select
                   value={specialistFilter}
                   onChange={(e) => setSpecialistFilter(e.target.value)}
-                  className="px-4 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                  className="px-4 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                 >
                   <option value="">Todos los especialistas</option>
                   {specialists && specialists.map((specialist) => (
@@ -725,7 +725,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                   type="date"
                   value={dateFromFilter}
                   onChange={(e) => setDateFromFilter(e.target.value)}
-                  className="px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                  className="px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                 />
               </div>
               <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
@@ -734,7 +734,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                   type="date"
                   value={dateToFilter}
                   onChange={(e) => setDateToFilter(e.target.value)}
-                  className="px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                  className="px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                 />
               </div>
               {(dateFromFilter || dateToFilter) && (
@@ -816,7 +816,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                         <div className="flex space-x-2">
                           <button
                             onClick={() => openEditModal(appointment)}
-                            className="inline-flex items-center px-2 py-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded text-xs font-medium transition-colors"
+                            className="inline-flex items-center px-2 py-1 text-primary hover:text-pink-800 hover:bg-pink-50 rounded text-xs font-medium transition-colors"
                           >
                             <Edit className="h-3 w-3 mr-1" />
                             Editar
@@ -851,7 +851,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                           {appointment.status === 'cancelled' && (
                             <button
                               onClick={() => updateAppointmentStatus(appointment.id, 'scheduled')}
-                              className="text-blue-600 hover:text-blue-800 text-xs font-medium hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+                              className="text-primary hover:text-pink-800 text-xs font-medium hover:bg-pink-50 px-2 py-1 rounded transition-colors"
                             >
                               Reactivar
                             </button>
@@ -970,7 +970,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                       <select
                         value={appointmentForm.specialistId}
                         onChange={(e) => handleFormChange('specialistId', e.target.value)}
-                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                         required
                       >
                         <option value="">Seleccionar especialista...</option>
@@ -988,7 +988,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                       <select
                         value={appointmentForm.serviceId}
                         onChange={(e) => handleFormChange('serviceId', e.target.value)}
-                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                         required
                       >
                         <option value="">Seleccionar servicio...</option>
@@ -1006,7 +1006,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                       <select
                         value={appointmentForm.patientId}
                         onChange={(e) => handleFormChange('patientId', e.target.value)}
-                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                       >
                         <option value="">Crear nuevo paciente...</option>
                         {patients && patients.map((patient) => (
@@ -1026,7 +1026,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                             type="text"
                             value={appointmentForm.patientName || ''}
                             onChange={(e) => handleFormChange('patientName', e.target.value)}
-                            className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                            className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                             required
                           />
                         </div>
@@ -1036,7 +1036,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                             type="email"
                             value={appointmentForm.patientEmail || ''}
                             onChange={(e) => handleFormChange('patientEmail', e.target.value)}
-                            className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                            className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                             required
                           />
                         </div>
@@ -1046,7 +1046,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                             type="tel"
                             value={appointmentForm.patientPhone || ''}
                             onChange={(e) => handleFormChange('patientPhone', e.target.value)}
-                            className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                            className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                           />
                         </div>
                       </div>
@@ -1061,7 +1061,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                           value={appointmentForm.appointmentDate}
                           onChange={(e) => handleFormChange('appointmentDate', e.target.value)}
                           min={getTodayString()}
-                          className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                           required
                         />
                       </div>
@@ -1070,7 +1070,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                         <select
                           value={appointmentForm.appointmentTime}
                           onChange={(e) => handleFormChange('appointmentTime', e.target.value)}
-                          className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                           required
                         >
                           <option value="">Seleccionar hora...</option>
@@ -1090,7 +1090,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                         value={appointmentForm.notes}
                         onChange={(e) => handleFormChange('notes', e.target.value)}
                         rows={3}
-                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1179,7 +1179,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                       <select
                         value={appointmentForm.specialistId}
                         onChange={(e) => handleFormChange('specialistId', e.target.value)}
-                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                         required
                       >
                         <option value="">Seleccionar especialista...</option>
@@ -1197,7 +1197,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                       <select
                         value={appointmentForm.serviceId}
                         onChange={(e) => handleFormChange('serviceId', e.target.value)}
-                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                         required
                       >
                         <option value="">Seleccionar servicio...</option>
@@ -1218,7 +1218,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                           value={appointmentForm.appointmentDate}
                           onChange={(e) => handleFormChange('appointmentDate', e.target.value)}
                           min={getTodayString()}
-                          className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                           required
                         />
                       </div>
@@ -1227,7 +1227,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                         <select
                           value={appointmentForm.appointmentTime}
                           onChange={(e) => handleFormChange('appointmentTime', e.target.value)}
-                          className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                           required
                         >
                           <option value="">Seleccionar hora...</option>
@@ -1247,7 +1247,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                         value={appointmentForm.notes}
                         onChange={(e) => handleFormChange('notes', e.target.value)}
                         rows={3}
-                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1263,7 +1263,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                     </button>
                     <button
                       type="button"
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 flex items-center"
+                      className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-primary to-pink-700 hover:from-pink-700 hover:to-pink-800 rounded-lg transition-colors disabled:opacity-50 flex items-center"
                       onClick={handleEditAppointment}
                       disabled={formLoading}
                     >
