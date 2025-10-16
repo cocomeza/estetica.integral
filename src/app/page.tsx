@@ -157,17 +157,49 @@ export default function Home() {
         )}
       </main>
 
-      {/* Footer compacto y simple */}
+      {/* Footer responsivo y optimizado */}
       <footer className="bg-white border-t border-gray-200 mt-8">
-        <div className="max-w-5xl mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-3 text-sm text-gray-600">
-            <div>
-              <span className="font-medium">Lorena Esquivel</span> • Estética Integral • Barberis 571 - Villa Ramallo, Pcia de Bs As
+        <div className="max-w-5xl mx-auto px-4 py-6">
+          {/* Contenido principal */}
+          <div className="flex flex-col space-y-4">
+            {/* Información principal */}
+            <div className="text-center md:text-left">
+              <div className="font-semibold text-gray-900 text-base mb-1">
+                Lorena Esquivel
+              </div>
+              <div className="text-sm text-gray-600 mb-2">
+                Estética Integral
+              </div>
+              <div className="text-sm text-gray-600 leading-relaxed">
+                Barberis 571<br className="md:hidden" />
+                <span className="md:inline"> - </span>Villa Ramallo, Pcia de Bs As
+              </div>
             </div>
-            <div className="flex items-center gap-4">
-              <span>03407 - 494611</span>
-              <span>•</span>
-              <span>Lun-Vie: 09:00-18:00</span>
+
+            {/* Información de contacto */}
+            <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                <span className="font-medium">03407 - 494611</span>
+              </div>
+              
+              <div className="hidden sm:block text-gray-400">•</div>
+              
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Lun-Vie: 09:00-18:00</span>
+              </div>
+            </div>
+
+            {/* Separador visual */}
+            <div className="border-t border-gray-100 pt-4">
+              <div className="text-center text-xs text-gray-500">
+                © 2024 Estética Integral - Villa Ramallo. Todos los derechos reservados.
+              </div>
             </div>
           </div>
         </div>
