@@ -329,14 +329,36 @@ export async function createAppointmentForAdmin(appointmentData: CreateAppointme
 }
 
 export async function updateAppointmentForAdmin(appointmentId: string, updateData: UpdateAppointmentData) {
-  // Si se está cambiando fecha/hora/especialista, verificar disponibilidad
-  if (updateData.specialistId && updateData.appointmentDate && updateData.appointmentTime) {
+  // Si se está cambiando fecha/hora/especialista, verificar disponibilidad del nuevo horario
+  // Primero obtener los datos actuales de la cita
+  const { data: currentAppointment } = await supabaseAdmin
+    .from('appointments')
+    .select('specialist_id, appointment_date, appointment_time')
+    .eq('id', appointmentId)
+    .single()
+
+  if (!currentAppointment) {
+    throw new Error('Cita no encontrada')
+  }
+
+  // Determinar los valores finales (actuales o actualizados)
+  const finalSpecialistId = updateData.specialistId || currentAppointment.specialist_id
+  const finalDate = updateData.appointmentDate || currentAppointment.appointment_date
+  const finalTime = updateData.appointmentTime || currentAppointment.appointment_time
+
+  // Si cambió la fecha, hora o especialista, verificar que el nuevo horario esté disponible
+  const hasChanged = 
+    updateData.specialistId !== undefined && updateData.specialistId !== currentAppointment.specialist_id ||
+    updateData.appointmentDate !== undefined && updateData.appointmentDate !== currentAppointment.appointment_date ||
+    updateData.appointmentTime !== undefined && updateData.appointmentTime !== currentAppointment.appointment_time
+
+  if (hasChanged) {
     const { data: existingAppointment } = await supabaseAdmin
       .from('appointments')
       .select('id')
-      .eq('specialist_id', updateData.specialistId)
-      .eq('appointment_date', updateData.appointmentDate)
-      .eq('appointment_time', updateData.appointmentTime)
+      .eq('specialist_id', finalSpecialistId)
+      .eq('appointment_date', finalDate)
+      .eq('appointment_time', finalTime)
       .neq('status', 'cancelled')
       .neq('id', appointmentId)
       .single()
