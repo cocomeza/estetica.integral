@@ -172,7 +172,7 @@ export default function Home() {
               </div>
               <div className="text-sm text-gray-600 leading-relaxed">
                 Barberis 571<br className="md:hidden" />
-                <span className="md:inline"> - </span>Villa Ramallo, Pcia de Bs As
+                <span className="md:inline"> </span>Villa Ramallo, Pcia de Bs As
               </div>
             </div>
 
@@ -197,8 +197,21 @@ export default function Home() {
 
             {/* Separador visual */}
             <div className="border-t border-gray-100 pt-4">
-              <div className="text-center text-xs text-gray-500">
-                © 2024 Estética Integral - Villa Ramallo. Todos los derechos reservados.
+              <div className="text-center text-xs text-gray-500 space-y-1">
+                <div>
+                  © 2025 Estética Integral Villa Ramallo. Todos los derechos reservados.
+                </div>
+                <div>
+                  Desarrollado por{' '}
+                  <a 
+                    href="https://botoncreativo.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-pink-700 font-medium transition-colors"
+                  >
+                    Boton Creativo
+                  </a>
+                </div>
               </div>
             </div>
           </div>
