@@ -70,7 +70,7 @@ export const generateAppointmentReceipt = (appointment: AppointmentData) => {
   doc.setFont('helvetica', 'normal')
   doc.text(`${appointment.specialistName}`, 25, 125)
   doc.text(`${appointment.specialistTitle}`, 25, 132)
-  doc.text(`Mat. 12345`, 25, 139)
+  doc.text(`Mat. Profesional`, 25, 139)
   
   // Datos del servicio
   doc.setFont('helvetica', 'bold')
@@ -105,8 +105,8 @@ export const generateAppointmentReceipt = (appointment: AppointmentData) => {
   // Información de contacto del centro
   doc.setFontSize(9)
   doc.setTextColor(96, 90, 87) // #605a57
-  doc.text('Centro de Estética Integral - Av. Corrientes 1234, CABA', 25, 260)
-  doc.text('Tel: +54 11 1234-5678 | Email: lorena@esteticaintegral.com.ar', 25, 265)
+  doc.text('Estética Integral - Barberis 571 - Villa Ramallo, Pcia de Bs As', 25, 260)
+  doc.text('Tel: 03407 - 494611 | Email: lorena@esteticaintegral.com.ar', 25, 265)
   
   // Footer
   doc.setFillColor(248, 249, 250)

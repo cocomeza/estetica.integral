@@ -162,10 +162,10 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-3 text-sm text-gray-600">
             <div>
-              <span className="font-medium">Lorena Esquivel</span> • Mat. 12345 • Av. Corrientes 1234, CABA
+              <span className="font-medium">Lorena Esquivel</span> • Estética Integral • Barberis 571 - Villa Ramallo, Pcia de Bs As
             </div>
             <div className="flex items-center gap-4">
-              <span>+54 11 1234-5678</span>
+              <span>03407 - 494611</span>
               <span>•</span>
               <span>Lun-Vie: 09:00-18:00</span>
             </div>
