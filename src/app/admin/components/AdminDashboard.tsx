@@ -122,6 +122,11 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   
+  // Filtros inteligentes
+  const [viewMode, setViewMode] = useState<'active' | 'history' | 'all'>('active')
+  const [periodFilter, setPeriodFilter] = useState<'today' | 'week' | 'month' | 'quarter' | 'custom'>('month')
+  const [showCompleted, setShowCompleted] = useState(false)
+  
   // Modales y formularios
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -456,6 +461,136 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     setAvailableTimes([])
   }
 
+  // Funciones para períodos inteligentes
+  const getPeriodDates = (period: string) => {
+    const today = new Date()
+    const todayStr = today.toISOString().split('T')[0]
+    
+    switch (period) {
+      case 'today':
+        return { from: todayStr, to: todayStr }
+      
+      case 'week':
+        const weekStart = new Date(today)
+        weekStart.setDate(today.getDate() - today.getDay())
+        const weekEnd = new Date(weekStart)
+        weekEnd.setDate(weekStart.getDate() + 6)
+        return { 
+          from: weekStart.toISOString().split('T')[0], 
+          to: weekEnd.toISOString().split('T')[0] 
+        }
+      
+      case 'month':
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+        const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+        return { 
+          from: monthStart.toISOString().split('T')[0], 
+          to: monthEnd.toISOString().split('T')[0] 
+        }
+      
+      case 'quarter':
+        const quarterStart = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3, 1)
+        const quarterEnd = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3 + 3, 0)
+        return { 
+          from: quarterStart.toISOString().split('T')[0], 
+          to: quarterEnd.toISOString().split('T')[0] 
+        }
+      
+      default:
+        return { from: '', to: '' }
+    }
+  }
+
+  const getActiveAppointments = () => {
+    const threeMonthsAgo = new Date()
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
+    const cutoffDate = threeMonthsAgo.toISOString().split('T')[0]
+    
+    return appointments.filter(appointment => {
+      const appointmentDate = appointment.appointment_date
+      return appointmentDate >= cutoffDate
+    })
+  }
+
+  const getHistoricalAppointments = () => {
+    const threeMonthsAgo = new Date()
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
+    const cutoffDate = threeMonthsAgo.toISOString().split('T')[0]
+    
+    return appointments.filter(appointment => {
+      const appointmentDate = appointment.appointment_date
+      return appointmentDate < cutoffDate
+    })
+  }
+
+  // Handlers para filtros inteligentes
+  const handlePeriodChange = (period: string) => {
+    setPeriodFilter(period as any)
+    if (period !== 'custom') {
+      const dates = getPeriodDates(period)
+      setDateFromFilter(dates.from)
+      setDateToFilter(dates.to)
+    }
+  }
+
+  const handleViewModeChange = (mode: 'active' | 'history' | 'all') => {
+    setViewMode(mode)
+    setCurrentPage(1) // Reset pagination
+  }
+
+  // Función para obtener citas filtradas inteligentemente
+  const getFilteredAppointments = () => {
+    let filtered = appointments
+
+    // Filtro por modo de vista
+    switch (viewMode) {
+      case 'active':
+        filtered = getActiveAppointments()
+        break
+      case 'history':
+        filtered = getHistoricalAppointments()
+        break
+      case 'all':
+      default:
+        filtered = appointments
+        break
+    }
+
+    // Filtro por búsqueda
+    if (search) {
+      filtered = filtered.filter(appointment =>
+        appointment.patient?.name?.toLowerCase().includes(search.toLowerCase()) ||
+        appointment.patient?.email?.toLowerCase().includes(search.toLowerCase()) ||
+        appointment.patient?.phone?.includes(search)
+      )
+    }
+
+    // Filtro por estado
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(appointment => appointment.status === statusFilter)
+    }
+
+    // Filtro por especialista
+    if (specialistFilter) {
+      filtered = filtered.filter(appointment => appointment.specialist?.id === specialistFilter)
+    }
+
+    // Filtro por fechas
+    if (dateFromFilter) {
+      filtered = filtered.filter(appointment => appointment.appointment_date >= dateFromFilter)
+    }
+    if (dateToFilter) {
+      filtered = filtered.filter(appointment => appointment.appointment_date <= dateToFilter)
+    }
+
+    // Filtro para mostrar/ocultar completadas en vista activa
+    if (viewMode === 'active' && !showCompleted) {
+      filtered = filtered.filter(appointment => appointment.status !== 'completed')
+    }
+
+    return filtered
+  }
+
   // Handle form changes
   const handleFormChange = (field: keyof CreateAppointmentForm, value: string) => {
     setAppointmentForm(prev => ({
@@ -716,9 +851,98 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
               </button>
             </div>
 
-            {/* Segunda fila: Filtros de fecha */}
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center pt-4 border-t border-gray-200">
-              <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Filtrar por fecha:</span>
+            {/* Segunda fila: Filtros inteligentes */}
+            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center pt-4 border-t border-gray-200">
+              {/* Modo de vista */}
+              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Vista:</span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handleViewModeChange('active')}
+                    className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${
+                      viewMode === 'active' 
+                        ? 'bg-primary text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Activas (3 meses)
+                  </button>
+                  <button
+                    onClick={() => handleViewModeChange('history')}
+                    className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${
+                      viewMode === 'history' 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Historial
+                  </button>
+                  <button
+                    onClick={() => handleViewModeChange('all')}
+                    className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${
+                      viewMode === 'all' 
+                        ? 'bg-gray-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Todas
+                  </button>
+                </div>
+              </div>
+
+              {/* Períodos rápidos */}
+              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Período:</span>
+                <div className="flex gap-1 flex-wrap">
+                  {['today', 'week', 'month', 'quarter'].map((period) => (
+                    <button
+                      key={period}
+                      onClick={() => handlePeriodChange(period)}
+                      className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${
+                        periodFilter === period 
+                          ? 'bg-pink-600 text-white' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {period === 'today' ? 'Hoy' : 
+                       period === 'week' ? 'Semana' :
+                       period === 'month' ? 'Mes' : 'Trimestre'}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setPeriodFilter('custom')}
+                    className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${
+                      periodFilter === 'custom' 
+                        ? 'bg-pink-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Personalizado
+                  </button>
+                </div>
+              </div>
+
+              {/* Mostrar completadas */}
+              {viewMode === 'active' && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="showCompleted"
+                    checked={showCompleted}
+                    onChange={(e) => setShowCompleted(e.target.checked)}
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  />
+                  <label htmlFor="showCompleted" className="text-sm text-gray-700">
+                    Incluir completadas
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* Tercera fila: Filtros de fecha personalizados */}
+            {periodFilter === 'custom' && (
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center pt-4 border-t border-gray-200">
+                <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Filtrar por fecha:</span>
               <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                 <label className="text-sm text-gray-600">Desde:</label>
                 <input
@@ -748,14 +972,37 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                   Limpiar fechas
                 </button>
               )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Appointments Table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Citas Médicas</h3>
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium text-gray-900">Citas Médicas</h3>
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <span>
+                  Mostrando {getFilteredAppointments().length} de {appointments.length} citas
+                </span>
+                {viewMode === 'active' && (
+                  <span className="px-2 py-1 bg-pink-100 text-pink-800 rounded-full text-xs">
+                    Activas
+                  </span>
+                )}
+                {viewMode === 'history' && (
+                  <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">
+                    Historial
+                  </span>
+                )}
+                {viewMode === 'all' && (
+                  <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                    Todas
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
@@ -783,7 +1030,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {appointments && appointments.map((appointment) => (
+                {getFilteredAppointments().map((appointment) => (
                   <tr key={appointment.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div>
