@@ -86,9 +86,9 @@ export default async function handler(
       res.setHeader('Set-Cookie', sessionCookie)
       console.log('✅ Login successful')
       res.status(200).json({ success: true, user: { email: admin.email, role: admin.role } })
-    } catch (sessionError) {
+    } catch (sessionError: any) {
       console.error('❌ Error creating session:', sessionError)
-      res.status(500).json({ error: 'Error al crear sesión', details: sessionError.message })
+      res.status(500).json({ error: 'Error al crear sesión', details: sessionError?.message || 'Unknown error' })
     }
   } catch (error: any) {
     console.error('❌ Error in admin login:', error)
