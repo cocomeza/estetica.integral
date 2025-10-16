@@ -170,13 +170,13 @@ export default function ScheduleManager({ specialistId }: ScheduleManagerProps) 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-        <Clock className="h-6 w-6 mr-2 text-blue-600" />
+        <Clock className="h-6 w-6 mr-2 text-primary" />
         Gestión de Horarios
       </h2>
 
       {/* Formulario */}
-      <div className="bg-blue-50 rounded-lg p-4 mb-6">
-        <h3 className="text-sm font-semibold text-blue-900 mb-3">
+      <div className="bg-pink-50 rounded-lg p-4 mb-6">
+        <h3 className="text-sm font-semibold text-pink-900 mb-3">
           {editingId ? 'Editar Horario' : 'Agregar Nuevo Horario'}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -239,7 +239,7 @@ export default function ScheduleManager({ specialistId }: ScheduleManagerProps) 
         <div className="flex gap-2 mt-4">
           <button
             onClick={handleSave}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex items-center px-4 py-2 bg-gradient-to-r from-primary to-pink-700 text-white rounded-lg hover:from-pink-700 hover:to-pink-800 shadow-md"
           >
             <Save className="h-4 w-4 mr-2" />
             {editingId ? 'Actualizar' : 'Crear'}
@@ -295,7 +295,7 @@ export default function ScheduleManager({ specialistId }: ScheduleManagerProps) 
               </button>
               <button
                 onClick={() => handleEdit(schedule)}
-                className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                className="p-2 text-primary hover:bg-pink-50 rounded"
               >
                 <Edit className="h-4 w-4" />
               </button>

@@ -181,7 +181,7 @@ export default function ClosureManager({ specialistId }: ClosureManagerProps) {
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-        <Calendar className="h-6 w-6 mr-2 text-purple-600" />
+        <Calendar className="h-6 w-6 mr-2 text-primary" />
         Gestión de Cierres y Vacaciones
       </h2>
 
@@ -241,7 +241,7 @@ export default function ClosureManager({ specialistId }: ClosureManagerProps) {
         <div className="flex gap-2 mt-4">
           <button
             onClick={handleSave}
-            className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 shadow-md"
           >
             <Save className="h-4 w-4 mr-2" />
             {editingId ? 'Actualizar' : 'Crear'}
@@ -323,7 +323,7 @@ export default function ClosureManager({ specialistId }: ClosureManagerProps) {
               </button>
               <button
                 onClick={() => handleEdit(closure)}
-                className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                className="p-2 text-primary hover:bg-pink-50 rounded"
               >
                 <Edit className="h-4 w-4" />
               </button>

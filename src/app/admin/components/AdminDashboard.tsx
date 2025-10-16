@@ -497,9 +497,9 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
 
   if (loading && appointments.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-light via-white to-secondary/30 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando panel de administración...</p>
         </div>
       </div>
@@ -507,19 +507,19 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-light via-white to-secondary/30">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white/95 backdrop-blur-sm shadow-lg border-b border-secondary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Panel de Administración</h1>
-              <p className="text-sm text-gray-600">Bienvenido, {adminUser.email}</p>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-pink-700 bg-clip-text text-transparent">Panel de Administración</h1>
+              <p className="text-sm text-neutral">Bienvenido, {adminUser.email}</p>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => router.push('/')}
-                className="flex items-center px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                className="flex items-center px-4 py-2 text-primary hover:text-pink-700 hover:bg-pink-50 rounded-lg transition-colors"
               >
                 <Home className="h-4 w-4 mr-2" />
                 Volver al Home
@@ -556,8 +556,8 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
               onClick={() => setActiveTab('appointments')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'appointments'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-primary hover:border-pink-300'
               }`}
             >
               <div className="flex items-center">
@@ -569,8 +569,8 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
               onClick={() => setActiveTab('schedules')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'schedules'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-primary hover:border-pink-300'
               }`}
             >
               <div className="flex items-center">
@@ -582,8 +582,8 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
               onClick={() => setActiveTab('closures')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'closures'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-primary hover:border-pink-300'
               }`}
             >
               <div className="flex items-center">
@@ -595,8 +595,8 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
               onClick={() => setActiveTab('announcements')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'announcements'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-primary hover:border-pink-300'
               }`}
             >
               <div className="flex items-center">
@@ -610,50 +610,50 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
         {/* Stats Cards - Solo mostrar en pestaña de turnos */}
         {activeTab === 'appointments' && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white rounded-xl shadow-md p-6 border border-pink-100">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="h-6 w-6 text-blue-600" />
+              <div className="p-2 bg-gradient-to-br from-pink-100 to-pink-200 rounded-lg">
+                <Calendar className="h-6 w-6 text-primary" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total de Citas</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-2xl font-bold bg-gradient-to-r from-primary to-pink-700 bg-clip-text text-transparent">{stats.total}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white rounded-xl shadow-md p-6 border border-pink-100">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Clock className="h-6 w-6 text-green-600" />
+              <div className="p-2 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg">
+                <Clock className="h-6 w-6 text-purple-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Hoy</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.today}</p>
+                <p className="text-2xl font-bold text-purple-600">{stats.today}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white rounded-xl shadow-md p-6 border border-pink-100">
             <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <Users className="h-6 w-6 text-yellow-600" />
+              <div className="p-2 bg-gradient-to-br from-yellow-100 to-amber-200 rounded-lg">
+                <Users className="h-6 w-6 text-amber-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Programadas</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.scheduled}</p>
+                <p className="text-2xl font-bold text-amber-600">{stats.scheduled}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white rounded-xl shadow-md p-6 border border-pink-100">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-green-600" />
+              <div className="p-2 bg-gradient-to-br from-green-100 to-emerald-200 rounded-lg">
+                <CheckCircle className="h-6 w-6 text-emerald-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Completadas</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
+                <p className="text-2xl font-bold text-emerald-600">{stats.completed}</p>
               </div>
             </div>
           </div>
@@ -709,7 +709,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
               
               <button
                 onClick={openCreateModal}
-                className="flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white font-medium rounded-lg hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                className="flex items-center px-4 py-2 bg-gradient-to-r from-primary to-pink-700 text-white font-medium rounded-lg hover:from-pink-700 hover:to-pink-800 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Crear Nueva Cita
@@ -1156,10 +1156,10 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                   </Dialog.Title>
 
                   {/* Mensaje informativo */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <div className="bg-pink-50 border border-pink-200 rounded-lg p-3 mb-4">
                     <div className="flex items-start">
-                      <AlertCircle className="h-5 w-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
-                      <div className="text-sm text-blue-800">
+                      <AlertCircle className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-pink-900">
                         <strong>Nota:</strong> Al cambiar la fecha u hora, el horario anterior quedará disponible automáticamente para otros pacientes.
                       </div>
                     </div>
