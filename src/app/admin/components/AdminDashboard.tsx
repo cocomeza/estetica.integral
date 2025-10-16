@@ -21,7 +21,8 @@ import {
   X,
   Save,
   Settings,
-  CalendarX
+  CalendarX,
+  Megaphone
 } from 'lucide-react'
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
@@ -32,12 +33,13 @@ import { formatDateForDisplay, getTodayString, fixDateFromDatabase, debugDatePro
 import { debugDateIssues, testDateFormatting } from '../../../lib/debug-dates-browser'
 import ScheduleManager from './ScheduleManager'
 import ClosureManager from './ClosureManager'
+import AnnouncementManager from './AnnouncementManager'
 
 interface AdminDashboardProps {
   adminUser: AdminUser
 }
 
-type TabType = 'appointments' | 'schedules' | 'closures'
+type TabType = 'appointments' | 'schedules' | 'closures' | 'announcements'
 
 interface AppointmentData {
   id: string
@@ -578,6 +580,19 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                 Cierres / Vacaciones
               </div>
             </button>
+            <button
+              onClick={() => setActiveTab('announcements')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'announcements'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center">
+                <Megaphone className="h-5 w-5 mr-2" />
+                Anuncios
+              </div>
+            </button>
           </nav>
         </div>
 
@@ -898,6 +913,11 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
         {/* Closure Management Tab */}
         {activeTab === 'closures' && specialistId && (
           <ClosureManager specialistId={specialistId} />
+        )}
+
+        {/* Announcements Management Tab */}
+        {activeTab === 'announcements' && (
+          <AnnouncementManager />
         )}
       </main>
 

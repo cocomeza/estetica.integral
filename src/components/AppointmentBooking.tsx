@@ -61,6 +61,8 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
     email: '',
     phone: ''
   })
+  const [bookingsBlocked, setBookingsBlocked] = useState(false)
+  const [blockingMessage, setBlockingMessage] = useState('')
 
   const fetchSpecialist = useCallback(async () => {
     const { data, error } = await supabase
@@ -83,6 +85,25 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
     if (data) setService(data)
     if (error) console.error('Error fetching service:', error)
   }, [serviceId])
+
+  const checkBookingStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/api/announcements')
+      if (response.ok) {
+        const data = await response.json()
+        if (data.hasBlockingAnnouncement) {
+          const blockingAnnouncement = data.announcements.find((a: any) => a.block_bookings)
+          setBookingsBlocked(true)
+          setBlockingMessage(blockingAnnouncement?.message || 'Las reservas están temporalmente suspendidas')
+        } else {
+          setBookingsBlocked(false)
+          setBlockingMessage('')
+        }
+      }
+    } catch (error) {
+      console.error('Error checking booking status:', error)
+    }
+  }, [])
 
   const fetchAvailableTimes = useCallback(async () => {
     if (!selectedDate || !specialist || !service) return
@@ -193,7 +214,8 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
   useEffect(() => {
     fetchSpecialist()
     fetchService()
-  }, [fetchSpecialist, fetchService])
+    checkBookingStatus()
+  }, [fetchSpecialist, fetchService, checkBookingStatus])
 
   useEffect(() => {
     if (selectedDate) {
@@ -338,6 +360,12 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
   }
 
   const handleConfirmBooking = () => {
+    // Verificar si las reservas están bloqueadas
+    if (bookingsBlocked) {
+      setError(blockingMessage || 'Las reservas están temporalmente suspendidas')
+      return
+    }
+
     // Validación completa antes de abrir el modal
     const errors = []
     

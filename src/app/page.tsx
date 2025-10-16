@@ -7,6 +7,7 @@ import { AESTHETIC_SERVICES } from '../config/aesthetic-services'
 import ServiceSelection from '../components/ServiceSelection'
 import SpecialistInfo from '../components/SpecialistInfo'
 import AppointmentBooking from '../components/AppointmentBooking'
+import AnnouncementBanner from '../components/AnnouncementBanner'
 
 // Datos de ejemplo para mostrar la interfaz cuando Supabase no está configurado
 const mockServices: AestheticService[] = [
@@ -130,6 +131,11 @@ export default function Home() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Banner de anuncios */}
+        <div className="mb-6">
+          <AnnouncementBanner />
+        </div>
+
         {/* Mensaje de bienvenida simple */}
         {!selectedService && (
           <div className="text-center mb-6">
