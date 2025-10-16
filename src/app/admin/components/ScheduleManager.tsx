@@ -50,6 +50,7 @@ export default function ScheduleManager({ specialistId }: ScheduleManagerProps) 
       setSchedules(data.schedules || [])
     } catch (error) {
       console.error('Error fetching schedules:', error)
+      setSchedules([])
     } finally {
       setLoading(false)
     }

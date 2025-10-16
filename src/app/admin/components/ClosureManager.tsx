@@ -49,6 +49,7 @@ export default function ClosureManager({ specialistId }: ClosureManagerProps) {
       setClosures(data.closures || [])
     } catch (error) {
       console.error('Error fetching closures:', error)
+      setClosures([])
     } finally {
       setLoading(false)
     }
@@ -266,7 +267,7 @@ export default function ClosureManager({ specialistId }: ClosureManagerProps) {
                   Turnos programados en este periodo:
                 </h4>
                 <ul className="text-sm text-red-800 space-y-1">
-                  {conflictingAppointments.map((apt, idx) => (
+                  {conflictingAppointments && conflictingAppointments.map((apt, idx) => (
                     <li key={idx}>
                       • {apt.appointment_date} a las {apt.appointment_time} - {apt.patient?.name}
                     </li>
@@ -283,7 +284,7 @@ export default function ClosureManager({ specialistId }: ClosureManagerProps) {
 
       {/* Lista de cierres */}
       <div className="space-y-3">
-        {closures.map((closure) => (
+        {closures && closures.map((closure) => (
           <div
             key={closure.id}
             className={`flex items-center justify-between p-4 border rounded-lg ${

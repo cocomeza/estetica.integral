@@ -183,8 +183,8 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       const appointmentsData = await appointmentsRes.json()
       const patientsData = await patientsRes.json()
 
-      setStats(statsData.stats)
-      setSpecialists(statsData.specialists)
+      setStats(statsData.stats || { total: 0, today: 0, scheduled: 0, completed: 0 })
+      setSpecialists(statsData.specialists || [])
       
       // Obtener el ID del primer especialista para gestión de horarios
       if (statsData.specialists && statsData.specialists.length > 0) {
@@ -205,12 +205,17 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
         })
       }
       
-      setAppointments(appointmentsData.appointments)
-      setTotalPages(appointmentsData.totalPages)
-      setPatients(patientsData.patients)
+      setAppointments(appointmentsData.appointments || [])
+      setTotalPages(appointmentsData.totalPages || 1)
+      setPatients(patientsData.patients || [])
     } catch (err) {
       setError('Error al cargar los datos del panel')
       console.error(err)
+      // Asegurar que los arrays nunca sean undefined
+      setAppointments([])
+      setSpecialists([])
+      setPatients([])
+      setStats({ total: 0, today: 0, scheduled: 0, completed: 0 })
     } finally {
       setLoading(false)
     }
@@ -668,7 +673,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                   className="px-4 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">Todos los especialistas</option>
-                  {specialists.map((specialist) => (
+                  {specialists && specialists.map((specialist) => (
                     <option key={specialist.id} value={specialist.id}>
                       {specialist.name}
                     </option>
@@ -752,7 +757,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {appointments.map((appointment) => (
+                {appointments && appointments.map((appointment) => (
                   <tr key={appointment.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div>
@@ -938,7 +943,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                         required
                       >
                         <option value="">Seleccionar especialista...</option>
-                        {specialists.map((specialist) => (
+                        {specialists && specialists.map((specialist) => (
                           <option key={specialist.id} value={specialist.id}>
                             {specialist.name} - {specialist.title}
                           </option>
@@ -955,7 +960,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                         className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
                       >
                         <option value="">Crear nuevo paciente...</option>
-                        {patients.map((patient) => (
+                        {patients && patients.map((patient) => (
                           <option key={patient.id} value={patient.id}>
                             {patient.name} - {patient.email}
                           </option>
@@ -1020,7 +1025,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                           required
                         >
                           <option value="">Seleccionar hora...</option>
-                          {availableTimes.map((time) => (
+                          {availableTimes && availableTimes.map((time) => (
                             <option key={time} value={time}>
                               {time}
                             </option>
@@ -1119,7 +1124,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                         required
                       >
                         <option value="">Seleccionar especialista...</option>
-                        {specialists.map((specialist) => (
+                        {specialists && specialists.map((specialist) => (
                           <option key={specialist.id} value={specialist.id}>
                             {specialist.name} - {specialist.title}
                           </option>
@@ -1149,7 +1154,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                           required
                         >
                           <option value="">Seleccionar hora...</option>
-                          {availableTimes.map((time) => (
+                          {availableTimes && availableTimes.map((time) => (
                             <option key={time} value={time}>
                               {time}
                             </option>
