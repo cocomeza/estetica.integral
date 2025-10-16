@@ -247,6 +247,7 @@ export async function getAppointmentStats() {
 
 export interface CreateAppointmentData {
   specialistId: string
+  serviceId: string
   patientId: string
   appointmentDate: string
   appointmentTime: string
@@ -256,6 +257,7 @@ export interface CreateAppointmentData {
 
 export interface UpdateAppointmentData {
   specialistId?: string
+  serviceId?: string
   patientId?: string
   appointmentDate?: string
   appointmentTime?: string
@@ -278,10 +280,11 @@ export async function createAppointmentForAdmin(appointmentData: CreateAppointme
     throw new Error('El horario seleccionado ya está ocupado')
   }
 
-  const { data, error } = await supabaseAdmin
+  const { data, error} = await supabaseAdmin
     .from('appointments')
     .insert([{
       specialist_id: appointmentData.specialistId,
+      service_id: appointmentData.serviceId,
       patient_id: appointmentData.patientId,
       appointment_date: appointmentData.appointmentDate,
       appointment_time: appointmentData.appointmentTime,
@@ -346,6 +349,7 @@ export async function updateAppointmentForAdmin(appointmentId: string, updateDat
   const updateObject: any = {}
   
   if (updateData.specialistId) updateObject.specialist_id = updateData.specialistId
+  if (updateData.serviceId) updateObject.service_id = updateData.serviceId
   if (updateData.patientId) updateObject.patient_id = updateData.patientId
   if (updateData.appointmentDate) updateObject.appointment_date = updateData.appointmentDate
   if (updateData.appointmentTime) updateObject.appointment_time = updateData.appointmentTime

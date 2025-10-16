@@ -92,6 +92,7 @@ interface Patient {
 
 interface CreateAppointmentForm {
   specialistId: string
+  serviceId: string
   patientId: string
   patientName?: string
   patientEmail?: string
@@ -107,6 +108,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   const [stats, setStats] = useState<Stats>({ total: 0, today: 0, scheduled: 0, completed: 0 })
   const [specialists, setSpecialists] = useState<Doctor[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
+  const [services, setServices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [specialistId, setSpecialistId] = useState<string>('')
@@ -155,6 +157,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   // Formulario de crear/editar cita
   const [appointmentForm, setAppointmentForm] = useState<CreateAppointmentForm>({
     specialistId: '',
+    serviceId: '',
     patientId: '',
     patientName: '',
     patientEmail: '',
@@ -170,20 +173,22 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     try {
       setLoading(true)
       
-      // Fetch stats, specialists, appointments and patients
-      const [statsRes, appointmentsRes, patientsRes] = await Promise.all([
+      // Fetch stats, specialists, appointments, patients and services
+      const [statsRes, appointmentsRes, patientsRes, servicesRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch(`/api/admin/appointments?page=${currentPage}&search=${encodeURIComponent(search)}&status=${statusFilter}&specialistId=${specialistFilter}&startDate=${dateFromFilter}&endDate=${dateToFilter}`),
-        fetch('/api/admin/patients')
+        fetch('/api/admin/patients'),
+        fetch('/api/admin/services')
       ])
 
-      if (!statsRes.ok || !appointmentsRes.ok || !patientsRes.ok) {
+      if (!statsRes.ok || !appointmentsRes.ok || !patientsRes.ok || !servicesRes.ok) {
         throw new Error('Error al cargar datos')
       }
 
       const statsData = await statsRes.json()
       const appointmentsData = await appointmentsRes.json()
       const patientsData = await patientsRes.json()
+      const servicesData = await servicesRes.json()
 
       setStats(statsData.stats || { total: 0, today: 0, scheduled: 0, completed: 0 })
       setSpecialists(statsData.specialists || [])
@@ -210,6 +215,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       setAppointments(appointmentsData.appointments || [])
       setTotalPages(appointmentsData.totalPages || 1)
       setPatients(patientsData.patients || [])
+      setServices(servicesData.services || [])
     } catch (err) {
       setError('Error al cargar los datos del panel')
       console.error(err)
@@ -217,6 +223,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       setAppointments([])
       setSpecialists([])
       setPatients([])
+      setServices([])
       setStats({ total: 0, today: 0, scheduled: 0, completed: 0 })
     } finally {
       setLoading(false)
@@ -281,7 +288,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   }
 
   const handleCreateAppointment = async () => {
-    if (!appointmentForm.specialistId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
+    if (!appointmentForm.specialistId || !appointmentForm.serviceId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
       alert('Por favor completa todos los campos obligatorios')
       return
     }
@@ -316,6 +323,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           specialistId: appointmentForm.specialistId,
+          serviceId: appointmentForm.serviceId,
           patientId: patientId,
           appointmentDate: appointmentForm.appointmentDate,
           appointmentTime: appointmentForm.appointmentTime,
@@ -340,7 +348,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   }
 
   const handleEditAppointment = async () => {
-    if (!editingAppointment || !appointmentForm.specialistId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
+    if (!editingAppointment || !appointmentForm.specialistId || !appointmentForm.serviceId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
       alert('Por favor completa todos los campos obligatorios')
       return
     }
@@ -353,6 +361,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
         body: JSON.stringify({
           appointmentId: editingAppointment.id,
           specialistId: appointmentForm.specialistId,
+          serviceId: appointmentForm.serviceId,
           patientId: appointmentForm.patientId,
           appointmentDate: appointmentForm.appointmentDate,
           appointmentTime: appointmentForm.appointmentTime,
@@ -413,6 +422,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     setEditingAppointment(appointment)
     setAppointmentForm({
       specialistId: appointment.specialist.id,
+      serviceId: appointment.service.id,
       patientId: appointment.patient.id,
       patientName: appointment.patient.name,
       patientEmail: appointment.patient.email,
@@ -434,6 +444,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   const resetForm = () => {
     setAppointmentForm({
       specialistId: '',
+      serviceId: '',
       patientId: '',
       patientName: '',
       patientEmail: '',
@@ -971,6 +982,24 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                       </select>
                     </div>
 
+                    {/* Selección de Servicio */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Servicio</label>
+                      <select
+                        value={appointmentForm.serviceId}
+                        onChange={(e) => handleFormChange('serviceId', e.target.value)}
+                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                        required
+                      >
+                        <option value="">Seleccionar servicio...</option>
+                        {services && services.map((service) => (
+                          <option key={service.id} value={service.id}>
+                            {service.name} ({service.duration} min)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     {/* Selección/Creación de Paciente */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Paciente</label>
@@ -1147,6 +1176,24 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                         {specialists && specialists.map((specialist) => (
                           <option key={specialist.id} value={specialist.id}>
                             {specialist.name} - {specialist.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Selección de Servicio */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Servicio</label>
+                      <select
+                        value={appointmentForm.serviceId}
+                        onChange={(e) => handleFormChange('serviceId', e.target.value)}
+                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                        required
+                      >
+                        <option value="">Seleccionar servicio...</option>
+                        {services && services.map((service) => (
+                          <option key={service.id} value={service.id}>
+                            {service.name} ({service.duration} min)
                           </option>
                         ))}
                       </select>

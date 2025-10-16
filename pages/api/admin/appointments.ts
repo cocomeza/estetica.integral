@@ -64,14 +64,15 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
 // POST - Crear nueva cita
 async function handlePost(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { specialistId, patientId, appointmentDate, appointmentTime, notes } = req.body
+    const { specialistId, serviceId, patientId, appointmentDate, appointmentTime, notes } = req.body
 
-    if (!specialistId || !patientId || !appointmentDate || !appointmentTime) {
+    if (!specialistId || !serviceId || !patientId || !appointmentDate || !appointmentTime) {
       return res.status(400).json({ error: 'Faltan datos obligatorios' })
     }
 
     const appointment = await createAppointmentForAdmin({
       specialistId,
+      serviceId,
       patientId,
       appointmentDate,
       appointmentTime,
@@ -88,7 +89,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
 // PUT - Actualizar cita completa
 async function handlePut(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { appointmentId, specialistId, patientId, appointmentDate, appointmentTime, notes, status } = req.body
+    const { appointmentId, specialistId, serviceId, patientId, appointmentDate, appointmentTime, notes, status } = req.body
 
     if (!appointmentId) {
       return res.status(400).json({ error: 'Se requiere appointmentId' })
@@ -96,6 +97,7 @@ async function handlePut(req: NextApiRequest, res: NextApiResponse) {
 
     const appointment = await updateAppointmentForAdmin(appointmentId, {
       specialistId,
+      serviceId,
       patientId,
       appointmentDate,
       appointmentTime,
