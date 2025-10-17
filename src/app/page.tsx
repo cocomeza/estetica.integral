@@ -157,61 +157,75 @@ export default function Home() {
         )}
       </main>
 
-      {/* Footer responsivo y optimizado */}
-      <footer className="bg-white border-t border-gray-200 mt-8">
-        <div className="max-w-5xl mx-auto px-4 py-6">
-          {/* Contenido principal */}
-          <div className="flex flex-col space-y-4">
-            {/* Información principal */}
+      {/* Footer profesional y balanceado */}
+      <footer className="bg-gradient-to-r from-gray-50 to-white border-t border-gray-200 mt-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Contenido principal en grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
+            {/* Información de la clínica */}
             <div className="text-center md:text-left">
-              <div className="font-semibold text-gray-900 text-base mb-1">
+              <div className="font-bold text-gray-900 text-lg mb-2">
                 Lorena Esquivel
               </div>
-              <div className="text-sm text-gray-600 mb-2">
+              <div className="text-primary font-medium mb-3">
                 Estética Integral
               </div>
               <div className="text-sm text-gray-600 leading-relaxed">
-                Barberis 571<br className="md:hidden" />
-                <span className="md:inline"> </span>Villa Ramallo, Pcia de Bs As
+                Barberis 571<br />
+                Villa Ramallo, Pcia de Bs As
               </div>
             </div>
 
             {/* Información de contacto */}
-            <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                <span className="font-medium">03407 - 494611</span>
+            <div className="text-center md:text-left">
+              <div className="font-semibold text-gray-900 text-sm mb-3">
+                Contacto
               </div>
-              
-              <div className="hidden sm:block text-gray-400">•</div>
-              
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>Lun-Vie: 09:00-18:00</span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-center md:justify-start gap-2 text-sm text-gray-600">
+                  <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  <span className="font-medium">03407 - 494611</span>
+                </div>
+                <div className="flex items-center justify-center md:justify-start gap-2 text-sm text-gray-600">
+                  <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Lun-Vie: 09:00-18:00</span>
+                </div>
               </div>
             </div>
 
-            {/* Separador visual */}
-            <div className="border-t border-gray-100 pt-4">
-              <div className="text-center text-xs text-gray-500 space-y-1">
-                <div>
-                  © 2025 Estética Integral Villa Ramallo. Todos los derechos reservados.
-                </div>
-                <div>
-                  Desarrollado por{' '}
-                  <a 
-                    href="https://botoncreativo.com" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary hover:text-pink-700 font-medium transition-colors"
-                  >
-                    Boton Creativo
-                  </a>
-                </div>
+            {/* Horarios de atención */}
+            <div className="text-center md:text-left">
+              <div className="font-semibold text-gray-900 text-sm mb-3">
+                Horarios
+              </div>
+              <div className="space-y-1 text-sm text-gray-600">
+                <div>Lunes a Viernes: 09:00 - 18:00</div>
+                <div>Sábados: 09:00 - 13:00</div>
+                <div>Domingos: Cerrado</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Separador y copyright */}
+          <div className="border-t border-gray-200 pt-6">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="text-xs text-gray-500 text-center md:text-left">
+                © 2025 Estética Integral Villa Ramallo. Todos los derechos reservados.
+              </div>
+              <div className="text-xs text-gray-500">
+                Desarrollado por{' '}
+                <a 
+                  href="https://botoncreativo.onrender.com/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:text-pink-700 font-medium transition-colors"
+                >
+                  Boton Creativo
+                </a>
               </div>
             </div>
           </div>
