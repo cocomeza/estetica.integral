@@ -192,7 +192,7 @@ export default function Home() {
                   <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Lun-Vie: 09:00-18:00</span>
+              <span>Lun-Vie: 09:00-18:00</span>
                 </div>
               </div>
             </div>
@@ -212,8 +212,8 @@ export default function Home() {
 
           {/* Separador y copyright */}
           <div className="border-t border-gray-200 pt-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-xs text-gray-500 text-center md:text-left">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="text-xs text-gray-500">
                 © 2025 Estética Integral Villa Ramallo. Todos los derechos reservados.
               </div>
               <div className="text-xs text-gray-500">
