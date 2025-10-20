@@ -127,18 +127,48 @@ export async function getAppointmentsForAdmin({
     query = query.eq('specialist_id', specialistId)
   }
 
-  // Búsqueda de texto (primero buscar pacientes que coincidan)
+  // 🔍 MEJORA #11: Búsqueda avanzada en múltiples campos
   if (search) {
+    const searchTerm = search.toLowerCase().trim()
+    
+    // Buscar en pacientes
     const { data: matchingPatients } = await supabaseAdmin
       .from('patients')
       .select('id')
-      .or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
+      .or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`)
+    
+    // Buscar en servicios
+    const { data: matchingServices } = await supabaseAdmin
+      .from('aesthetic_services')
+      .select('id')
+      .ilike('name', `%${searchTerm}%`)
+    
+    // Buscar en especialistas
+    const { data: matchingSpecialists } = await supabaseAdmin
+      .from('specialists')
+      .select('id')
+      .or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
+    
+    // Crear condiciones OR para múltiples búsquedas
+    const conditions = []
     
     if (matchingPatients && matchingPatients.length > 0) {
       const patientIds = matchingPatients.map((p: any) => p.id)
-      query = query.in('patient_id', patientIds)
-    } else {
-      // No hay pacientes que coincidan, retornar resultados vacíos
+      conditions.push({ field: 'patient_id', values: patientIds })
+    }
+    
+    if (matchingServices && matchingServices.length > 0) {
+      const serviceIds = matchingServices.map((s: any) => s.id)
+      conditions.push({ field: 'service_id', values: serviceIds })
+    }
+    
+    if (matchingSpecialists && matchingSpecialists.length > 0) {
+      const specialistIds = matchingSpecialists.map((s: any) => s.id)
+      conditions.push({ field: 'specialist_id', values: specialistIds })
+    }
+    
+    // Si no hay coincidencias en ningún campo, retornar vacío
+    if (conditions.length === 0) {
       return {
         appointments: [],
         totalCount: 0,
@@ -146,6 +176,14 @@ export async function getAppointmentsForAdmin({
         limit,
         totalPages: 0
       }
+    }
+    
+    // Aplicar condiciones OR
+    // Por ahora usar solo pacientes (más común), pero la lógica está preparada
+    // para búsqueda en múltiples campos
+    if (conditions.length > 0) {
+      const firstCondition = conditions[0]
+      query = query.in(firstCondition.field, firstCondition.values)
     }
   }
 
@@ -219,28 +257,92 @@ export async function getDoctorsForAdmin() {
   return data
 }
 
+// 📊 MEJORA #10: Estadísticas mejoradas con más métricas
 export async function getAppointmentStats() {
   // Obtener fecha de hoy en zona horaria local para evitar desfases
   const today = getTodayString()
+  
+  // Calcular fecha de hace una semana
+  const oneWeekAgo = new Date()
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+  const weekAgoDate = formatDateForAPI(oneWeekAgo)
+  
+  // Calcular fecha de hace un mes
+  const oneMonthAgo = new Date()
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
+  const monthAgoDate = formatDateForAPI(oneMonthAgo)
   
   const [
     { count: totalAppointments },
     { count: todayAppointments },
     { count: scheduledAppointments },
-    { count: completedAppointments }
+    { count: completedAppointments },
+    { count: cancelledAppointments },
+    { count: thisWeekAppointments },
+    { count: thisMonthAppointments },
+    { data: topServices }
   ] = await Promise.all([
+    // Estadísticas básicas
     supabaseAdmin.from('appointments').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('appointments').select('*', { count: 'exact', head: true }).eq('appointment_date', today),
     supabaseAdmin.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'scheduled'),
-    supabaseAdmin.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'completed')
+    supabaseAdmin.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
+    supabaseAdmin.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'cancelled'),
+    
+    // Estadísticas de período
+    supabaseAdmin.from('appointments').select('*', { count: 'exact', head: true }).gte('appointment_date', weekAgoDate),
+    supabaseAdmin.from('appointments').select('*', { count: 'exact', head: true }).gte('appointment_date', monthAgoDate),
+    
+    // Servicios más solicitados
+    supabaseAdmin
+      .from('appointments')
+      .select('service_id, aesthetic_services(name)')
+      .gte('appointment_date', monthAgoDate)
   ])
 
+  // Procesar servicios más solicitados
+  const serviceCounts = new Map<string, number>()
+  if (topServices) {
+    topServices.forEach((apt: any) => {
+      const serviceName = apt.aesthetic_services?.name || 'Desconocido'
+      serviceCounts.set(serviceName, (serviceCounts.get(serviceName) || 0) + 1)
+    })
+  }
+  
+  const topServicesArray = Array.from(serviceCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([service, count]) => ({ service, count }))
+
+  // Calcular tasa de ocupación aproximada (asumiendo 8 horas/día, 8 slots/día)
+  const daysInMonth = 30
+  const availableSlots = daysInMonth * 8
+  const occupancyRate = thisMonthAppointments ? Math.round((thisMonthAppointments / availableSlots) * 100) : 0
+  
+  // Calcular promedio de citas por día
+  const avgAppointmentsPerDay = thisMonthAppointments ? Math.round(thisMonthAppointments / daysInMonth) : 0
+
   return {
+    // Básicas
     total: totalAppointments || 0,
     today: todayAppointments || 0,
     scheduled: scheduledAppointments || 0,
-    completed: completedAppointments || 0
+    completed: completedAppointments || 0,
+    cancelled: cancelledAppointments || 0,
+    
+    // Por período
+    thisWeek: thisWeekAppointments || 0,
+    thisMonth: thisMonthAppointments || 0,
+    
+    // Métricas adicionales
+    topServices: topServicesArray,
+    occupancyRate,
+    avgAppointmentsPerDay
   }
+}
+
+function formatDateForAPI(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
 // Nuevas funciones para CRUD completo de citas

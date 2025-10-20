@@ -34,14 +34,42 @@ export async function validateAdminCredentials(email: string, password: string):
   return password === ADMIN_PASSWORD
 }
 
-export async function generateAdminToken(email: string): Promise<string> {
+// 🔄 MEJORA #8: Tokens con expiración más corta y refresh tokens
+export async function generateAdminToken(email: string, expiresIn: string = '1h'): Promise<string> {
   const secret = new TextEncoder().encode(getJwtSecret())
   
   return await new SignJWT({ email, role: 'admin' })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('24h')
+    .setExpirationTime(expiresIn)
     .sign(secret)
+}
+
+export async function generateRefreshToken(email: string): Promise<string> {
+  const secret = new TextEncoder().encode(getJwtSecret())
+  
+  return await new SignJWT({ email, role: 'admin', type: 'refresh' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d') // Refresh token válido por 7 días
+    .sign(secret)
+}
+
+export async function refreshAccessToken(refreshToken: string): Promise<string | null> {
+  try {
+    const secret = new TextEncoder().encode(getJwtSecret())
+    const { payload } = await jwtVerify(refreshToken, secret)
+    
+    // Verificar que sea un refresh token
+    if (payload.type !== 'refresh') {
+      return null
+    }
+    
+    // Generar nuevo access token
+    return await generateAdminToken(payload.email as string, '1h')
+  } catch {
+    return null
+  }
 }
 
 export async function verifyAdminToken(token: string): Promise<AdminUser | null> {
@@ -54,16 +82,28 @@ export async function verifyAdminToken(token: string): Promise<AdminUser | null>
   }
 }
 
-export async function setAdminSession(email: string): Promise<string> {
-  const token = await generateAdminToken(email)
+// 🔄 MEJORA #8: Sesión con access token (1h) y refresh token (7d)
+export async function setAdminSession(email: string): Promise<string[]> {
+  const accessToken = await generateAdminToken(email, '1h')
+  const refreshToken = await generateRefreshToken(email)
   
-  return serialize('admin-session', token, {
+  const accessCookie = serialize('admin-session', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 24 * 60 * 60, // 24 horas
+    maxAge: 60 * 60, // 1 hora
     path: '/'
   })
+  
+  const refreshCookie = serialize('admin-refresh', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60, // 7 días
+    path: '/'
+  })
+  
+  return [accessCookie, refreshCookie]
 }
 
 export async function getAdminSession(): Promise<AdminUser | null> {

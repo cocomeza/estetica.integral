@@ -90,10 +90,10 @@ export default async function handler(
 
     console.log('✅ Password valid, creating session...')
     
-    // Crear sesión
+    // 🔄 MEJORA #8: Crear sesión con access token y refresh token
     try {
-      const sessionCookie = await setAdminSession(email)
-      res.setHeader('Set-Cookie', sessionCookie)
+      const sessionCookies = await setAdminSession(email)
+      res.setHeader('Set-Cookie', sessionCookies) // Array de cookies
       console.log('✅ Login successful')
       res.status(200).json({ success: true, user: { email: admin.email, role: admin.role } })
     } catch (sessionError: any) {

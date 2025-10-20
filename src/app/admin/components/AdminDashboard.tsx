@@ -34,6 +34,7 @@ import { debugDateIssues, testDateFormatting } from '../../../lib/debug-dates-br
 import ScheduleManager from './ScheduleManager'
 import ClosureManager from './ClosureManager'
 import AnnouncementManager from './AnnouncementManager'
+import CalendarView from './CalendarView'
 
 interface AdminDashboardProps {
   adminUser: AdminUser
@@ -69,11 +70,23 @@ interface AppointmentData {
   }
 }
 
+// 📊 MEJORA #10: Interfaz de estadísticas mejorada
 interface Stats {
+  // Básicas
   total: number
   today: number
   scheduled: number
   completed: number
+  cancelled?: number
+  
+  // Por período
+  thisWeek?: number
+  thisMonth?: number
+  
+  // Métricas adicionales
+  topServices?: Array<{ service: string; count: number }>
+  occupancyRate?: number
+  avgAppointmentsPerDay?: number
 }
 
 interface Doctor {
@@ -112,6 +125,9 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [specialistId, setSpecialistId] = useState<string>('')
+  
+  // 📅 MEJORA #6: Vista de calendario
+  const [viewType, setViewType] = useState<'list' | 'calendar'>('list')
   
   // Filtros
   const [search, setSearch] = useState('')
@@ -777,8 +793,11 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
         </div>
 
         {/* Stats Cards - Solo mostrar en pestaña de turnos */}
+        {/* 📊 MEJORA #10: Estadísticas mejoradas con más métricas */}
         {activeTab === 'appointments' && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <>
+          {/* Primera fila de estadísticas */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div className="bg-white rounded-xl shadow-md p-6 border border-pink-100">
             <div className="flex items-center">
               <div className="p-2 bg-gradient-to-br from-pink-100 to-pink-200 rounded-lg">
@@ -827,11 +846,121 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
             </div>
           </div>
         </div>
+
+        {/* Segunda fila de estadísticas - Nuevas métricas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow-md p-6 border border-blue-100">
+            <div className="flex items-center">
+              <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg">
+                <Calendar className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Esta Semana</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.thisWeek || 0}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6 border border-indigo-100">
+            <div className="flex items-center">
+              <div className="p-2 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-lg">
+                <Calendar className="h-6 w-6 text-indigo-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Este Mes</p>
+                <p className="text-2xl font-bold text-indigo-600">{stats.thisMonth || 0}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6 border border-cyan-100">
+            <div className="flex items-center">
+              <div className="p-2 bg-gradient-to-br from-cyan-100 to-cyan-200 rounded-lg">
+                <Users className="h-6 w-6 text-cyan-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Promedio/Día</p>
+                <p className="text-2xl font-bold text-cyan-600">{stats.avgAppointmentsPerDay || 0}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6 border border-teal-100">
+            <div className="flex items-center">
+              <div className="p-2 bg-gradient-to-br from-teal-100 to-teal-200 rounded-lg">
+                <CheckCircle className="h-6 w-6 text-teal-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Ocupación</p>
+                <p className="text-2xl font-bold text-teal-600">{stats.occupancyRate || 0}%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Top Servicios */}
+        {stats.topServices && stats.topServices.length > 0 && (
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-pink-100">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Servicios Más Solicitados (Este Mes)</h3>
+            <div className="space-y-3">
+              {stats.topServices.map((item, index) => (
+                <div key={item.service} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <span className="w-8 h-8 flex items-center justify-center bg-primary text-white rounded-full text-sm font-bold mr-3">
+                      {index + 1}
+                    </span>
+                    <span className="text-gray-900 font-medium">{item.service}</span>
+                  </div>
+                  <span className="text-gray-600 font-semibold">{item.count} citas</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        </>
         )}
 
         {/* Content Based on Active Tab */}
         {activeTab === 'appointments' && (
           <>
+            {/* 📅 MEJORA #6: Toggle entre vista lista y calendario */}
+            <div className="mb-4 flex justify-end">
+              <div className="inline-flex rounded-lg border border-gray-300 p-1">
+                <button
+                  onClick={() => setViewType('list')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    viewType === 'list'
+                      ? 'bg-primary text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Vista Lista
+                </button>
+                <button
+                  onClick={() => setViewType('calendar')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    viewType === 'calendar'
+                      ? 'bg-primary text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Vista Calendario
+                </button>
+              </div>
+            </div>
+
+            {/* Vista de Calendario */}
+            {viewType === 'calendar' && (
+              <CalendarView 
+                appointments={getFilteredAppointments()} 
+                onEditAppointment={openEditModal}
+                onRefresh={fetchData}
+              />
+            )}
+
+            {/* Vista de Lista */}
+            {viewType === 'list' && (
+              <>
             {/* Filters and Actions */}
             <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <div className="flex flex-col gap-4">
@@ -1194,6 +1323,8 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
             </div>
           )}
         </div>
+              </>
+            )}
           </>
         )}
 
