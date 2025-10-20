@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // La autenticación se maneja en el middleware
 
   try {
-    const { specialistId, date } = req.query
+    const { specialistId, date, serviceId } = req.query
 
     if (!specialistId || !date) {
       return res.status(400).json({ error: 'specialistId y date son requeridos' })
@@ -17,7 +17,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const availableTimes = await getAvailableTimesForAdmin(
       specialistId as string,
-      date as string
+      date as string,
+      serviceId as string | undefined
     )
 
     return res.status(200).json({

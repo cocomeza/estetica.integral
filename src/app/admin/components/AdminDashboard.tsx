@@ -277,9 +277,13 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   }
 
   // Nuevas funciones para CRUD completo
-  const fetchAvailableTimes = async (specialistId: string, date: string) => {
+  const fetchAvailableTimes = async (specialistId: string, date: string, serviceId?: string) => {
     try {
-      const response = await fetch(`/api/admin/available-times?specialistId=${specialistId}&date=${date}`)
+      let url = `/api/admin/available-times?specialistId=${specialistId}&date=${date}`
+      if (serviceId) {
+        url += `&serviceId=${serviceId}`
+      }
+      const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
         setAvailableTimes(data.availableTimes)
@@ -437,7 +441,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       notes: appointment.notes || ''
     })
     // Fetch available times for the selected specialist and date
-    fetchAvailableTimes(appointment.specialist.id, appointment.appointment_date)
+    fetchAvailableTimes(appointment.specialist.id, appointment.appointment_date, appointment.service.id)
     setShowEditModal(true)
   }
 
@@ -598,13 +602,14 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       [field]: value
     }))
 
-    // If specialist or date changes, fetch available times
-    if (field === 'specialistId' || field === 'appointmentDate') {
+    // If specialist, service or date changes, fetch available times
+    if (field === 'specialistId' || field === 'appointmentDate' || field === 'serviceId') {
       const specialistId = field === 'specialistId' ? value : appointmentForm.specialistId
       const date = field === 'appointmentDate' ? value : appointmentForm.appointmentDate
+      const serviceId = field === 'serviceId' ? value : appointmentForm.serviceId
       
       if (specialistId && date) {
-        fetchAvailableTimes(specialistId, date)
+        fetchAvailableTimes(specialistId, date, serviceId)
       } else {
         setAvailableTimes([])
       }

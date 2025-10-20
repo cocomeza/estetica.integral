@@ -266,6 +266,20 @@ export interface UpdateAppointmentData {
 }
 
 export async function createAppointmentForAdmin(appointmentData: CreateAppointmentData) {
+  // 🔧 FIX Bug #5: Verificar si la fecha está cerrada (vacaciones/feriados)
+  const { data: closures } = await supabaseAdmin
+    .from('closures')
+    .select('*')
+    .eq('specialist_id', appointmentData.specialistId)
+    .eq('is_active', true)
+    .lte('start_date', appointmentData.appointmentDate)
+    .gte('end_date', appointmentData.appointmentDate)
+
+  if (closures && closures.length > 0) {
+    const closure = closures[0]
+    throw new Error(`No se pueden crear citas en esta fecha: ${closure.reason || 'Fecha cerrada'}`)
+  }
+
   // Verificar que el horario esté disponible
   const { data: existingAppointment } = await supabaseAdmin
     .from('appointments')
@@ -353,6 +367,22 @@ export async function updateAppointmentForAdmin(appointmentId: string, updateDat
     updateData.appointmentTime !== undefined && updateData.appointmentTime !== currentAppointment.appointment_time
 
   if (hasChanged) {
+    // 🔧 FIX Bug #5: Verificar si la nueva fecha está cerrada
+    if (updateData.appointmentDate) {
+      const { data: closures } = await supabaseAdmin
+        .from('closures')
+        .select('*')
+        .eq('specialist_id', finalSpecialistId)
+        .eq('is_active', true)
+        .lte('start_date', finalDate)
+        .gte('end_date', finalDate)
+
+      if (closures && closures.length > 0) {
+        const closure = closures[0]
+        throw new Error(`No se pueden crear citas en esta fecha: ${closure.reason || 'Fecha cerrada'}`)
+      }
+    }
+
     const { data: existingAppointment } = await supabaseAdmin
       .from('appointments')
       .select('id')
@@ -475,32 +505,74 @@ export async function createPatientForAdmin(patientData: { name: string; email: 
   return data
 }
 
-export async function getAvailableTimesForAdmin(specialistId: string, date: string) {
+export async function getAvailableTimesForAdmin(specialistId: string, date: string, serviceId?: string) {
   // Obtener horario del especialista para ese día usando función centralizada
   const dayOfWeek = getDayOfWeek(date)
   
   const { data: schedule } = await supabaseAdmin
     .from('work_schedules')
-    .select('start_time, end_time')
+    .select('start_time, end_time, lunch_start, lunch_end, allowed_services')
     .eq('specialist_id', specialistId)
     .eq('day_of_week', dayOfWeek)
+    .eq('is_active', true)
     .single()
 
   if (!schedule) {
     return []
   }
 
-  // Obtener turnos ya reservados para esa fecha
+  // 🔧 FIX Bug #9: Verificar si el servicio está permitido en este día
+  if (serviceId && schedule.allowed_services && schedule.allowed_services.length > 0) {
+    if (!schedule.allowed_services.includes(serviceId)) {
+      console.log(`⚠️ Servicio ${serviceId} no permitido en día ${dayOfWeek}`)
+      return []
+    }
+  }
+
+  // Obtener la duración del servicio para calcular intervalos correctamente
+  let serviceDuration = 30 // Default
+  if (serviceId) {
+    const { data: service } = await supabaseAdmin
+      .from('aesthetic_services')
+      .select('duration')
+      .eq('id', serviceId)
+      .single()
+    
+    if (service) {
+      serviceDuration = service.duration
+    }
+  }
+
+  // Obtener turnos ya reservados para esa fecha con su duración
   const { data: existingAppointments } = await supabaseAdmin
     .from('appointments')
-    .select('appointment_time')
+    .select('appointment_time, duration')
     .eq('specialist_id', specialistId)
     .eq('appointment_date', date)
     .neq('status', 'cancelled')
 
-  const bookedTimes = existingAppointments?.map((apt: any) => apt.appointment_time) || []
+  // Crear intervalos ocupados considerando la duración de cada cita
+  const occupiedIntervals: Array<{ start: number; end: number }> = []
+  
+  if (existingAppointments) {
+    existingAppointments.forEach((apt: any) => {
+      const [hour, min] = apt.appointment_time.split(':').map(Number)
+      const startMinutes = hour * 60 + min
+      const endMinutes = startMinutes + (apt.duration || 30)
+      occupiedIntervals.push({ start: startMinutes, end: endMinutes })
+    })
+  }
 
-  // Generar horarios disponibles (cada 30 minutos)
+  // 🔧 FIX Bug #6: Agregar horario de almuerzo como intervalo ocupado
+  if (schedule.lunch_start && schedule.lunch_end) {
+    const [lunchStartHour, lunchStartMin] = schedule.lunch_start.split(':').map(Number)
+    const [lunchEndHour, lunchEndMin] = schedule.lunch_end.split(':').map(Number)
+    const lunchStart = lunchStartHour * 60 + lunchStartMin
+    const lunchEnd = lunchEndHour * 60 + lunchEndMin
+    occupiedIntervals.push({ start: lunchStart, end: lunchEnd })
+  }
+
+  // Generar horarios disponibles usando la duración del servicio
   const times = []
   const [startHour, startMin] = schedule.start_time.split(':').map(Number)
   const [endHour, endMin] = schedule.end_time.split(':').map(Number)
@@ -508,13 +580,36 @@ export async function getAvailableTimesForAdmin(specialistId: string, date: stri
   const startTime = startHour * 60 + startMin
   const endTime = endHour * 60 + endMin
   
-  for (let time = startTime; time < endTime; time += 30) {
-    const hours = Math.floor(time / 60).toString().padStart(2, '0')
-    const minutes = (time % 60).toString().padStart(2, '0')
-    const timeString = `${hours}:${minutes}`
+  // 🔧 FIX Bug #8: Usar duración del servicio en lugar de 30 minutos fijo
+  for (let time = startTime; time < endTime; time += serviceDuration) {
+    const proposedEnd = time + serviceDuration
     
-    if (!bookedTimes.includes(timeString)) {
-      times.push(timeString)
+    // Verificar que no se pase del horario de fin
+    if (proposedEnd > endTime) {
+      break
+    }
+    
+    // 🔧 FIX Bug #3: Verificar que no haya overlap con ningún intervalo ocupado
+    let hasOverlap = false
+    for (const occupied of occupiedIntervals) {
+      // Hay overlap si:
+      // - El inicio propuesto está dentro de un intervalo ocupado
+      // - El fin propuesto está dentro de un intervalo ocupado
+      // - El intervalo propuesto contiene completamente un intervalo ocupado
+      if (
+        (time >= occupied.start && time < occupied.end) ||
+        (proposedEnd > occupied.start && proposedEnd <= occupied.end) ||
+        (time <= occupied.start && proposedEnd >= occupied.end)
+      ) {
+        hasOverlap = true
+        break
+      }
+    }
+    
+    if (!hasOverlap) {
+      const hours = Math.floor(time / 60).toString().padStart(2, '0')
+      const minutes = (time % 60).toString().padStart(2, '0')
+      times.push(`${hours}:${minutes}`)
     }
   }
 
@@ -541,7 +636,9 @@ export async function createPublicAppointment({
     phone?: string
   }
 }) {
-  console.log('🔄 Iniciando creación de reserva pública...')
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔄 Iniciando creación de reserva pública...')
+  }
   
   try {
     // 1. Verificar que el especialista existe y está activo
@@ -568,7 +665,21 @@ export async function createPublicAppointment({
       throw new Error('Servicio no encontrado o inactivo')
     }
 
-    // 3. Verificar disponibilidad del horario
+    // 3. 🔧 FIX Bug #5: Verificar que la fecha no esté cerrada
+    const { data: closures } = await supabaseAdmin
+      .from('closures')
+      .select('*')
+      .eq('specialist_id', specialistId)
+      .eq('is_active', true)
+      .lte('start_date', appointmentDate)
+      .gte('end_date', appointmentDate)
+
+    if (closures && closures.length > 0) {
+      const closure = closures[0]
+      throw new Error(`No hay atención disponible: ${closure.reason || 'Fecha cerrada'}`)
+    }
+
+    // 4. 🔧 FIX Bug #1: Verificar disponibilidad del horario (primera verificación)
     const { data: existingAppointment } = await supabaseAdmin
       .from('appointments')
       .select('id')
@@ -582,7 +693,7 @@ export async function createPublicAppointment({
       throw new Error('El horario seleccionado ya no está disponible')
     }
 
-    // 4. Buscar o crear el paciente
+    // 5. 🔧 FIX Bug #2: Buscar o crear el paciente (manejando errores)
     let patient
     const { data: existingPatient } = await supabaseAdmin
       .from('patients')
@@ -604,7 +715,9 @@ export async function createPublicAppointment({
         .single()
 
       if (updateError) {
-        console.error('Error actualizando paciente:', updateError)
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error actualizando paciente:', updateError)
+        }
         patient = existingPatient
       } else {
         patient = updatedPatient
@@ -631,7 +744,9 @@ export async function createPublicAppointment({
       patient = newPatient
     }
 
-    // 5. Crear la cita
+    // 6. Crear la cita con manejo de conflictos
+    // La constraint UNIQUE en la BD (specialist_id, appointment_date, appointment_time)
+    // previene inserciones duplicadas, pero manejamos el error explícitamente
     const appointmentData = {
       specialist_id: specialistId,
       patient_id: patient.id,
@@ -662,11 +777,17 @@ export async function createPublicAppointment({
       .single()
 
     if (appointmentError) {
+      // 🔧 FIX Bug #1: Manejar específicamente errores de duplicación
+      if (appointmentError.code === '23505') { // Unique constraint violation
+        throw new Error('El horario seleccionado ya fue reservado por otro cliente. Por favor elige otro horario.')
+      }
       console.error('Error creando cita:', appointmentError)
-      throw new Error('Error al crear la reserva')
+      throw new Error('Error al crear la reserva. Por favor intenta nuevamente.')
     }
 
-    console.log('✅ Reserva pública creada exitosamente:', newAppointment.id)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ Reserva pública creada exitosamente:', newAppointment.id)
+    }
     return newAppointment
 
   } catch (error: any) {

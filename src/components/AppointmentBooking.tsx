@@ -160,16 +160,27 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
 
     console.log('📅 Horario del especialista:', schedule)
 
-    // Obtener turnos ya reservados para esa fecha
+    // Obtener turnos ya reservados para esa fecha con su duración
     const { data: existingAppointments } = await supabase
       .from('appointments')
-      .select('appointment_time')
+      .select('appointment_time, duration')
       .eq('specialist_id', specialist.id)
       .eq('appointment_date', dateString)
       .neq('status', 'cancelled')
 
-    const bookedTimes = existingAppointments?.map(apt => apt.appointment_time) || []
-    console.log('🚫 Horarios ocupados:', bookedTimes)
+    console.log('🚫 Citas existentes:', existingAppointments)
+
+    // 🔧 FIX Bug #3: Crear intervalos ocupados considerando la duración
+    const occupiedIntervals: Array<{ start: Date; end: Date }> = []
+    
+    if (existingAppointments) {
+      existingAppointments.forEach((apt: any) => {
+        const [hour, min] = apt.appointment_time.split(':').map(Number)
+        const startTime = setMinutes(setHours(new Date(localDate), hour), min)
+        const endTime = addMinutes(startTime, apt.duration || 45)
+        occupiedIntervals.push({ start: startTime, end: endTime })
+      })
+    }
 
     // Generar horarios disponibles según la duración del servicio
     const times = []
@@ -193,14 +204,36 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
     const intervalMinutes = service.duration
     
     while (currentTime < endTime) {
-      const timeString = format(currentTime, 'HH:mm')
+      const proposedEnd = addMinutes(currentTime, intervalMinutes)
+      
+      // Verificar que no se pase del horario de fin
+      if (proposedEnd > endTime) {
+        break
+      }
       
       // Excluir horario de almuerzo
-      const isLunchTime = lunchStart && lunchEnd && currentTime >= lunchStart && currentTime < lunchEnd
+      const isLunchTime = lunchStart && lunchEnd && 
+        ((currentTime >= lunchStart && currentTime < lunchEnd) ||
+         (proposedEnd > lunchStart && proposedEnd <= lunchEnd) ||
+         (currentTime <= lunchStart && proposedEnd >= lunchEnd))
       
-      if (!bookedTimes.includes(timeString) && !isLunchTime) {
-        times.push(timeString)
+      // 🔧 FIX Bug #3: Verificar que no haya overlap con intervalos ocupados
+      let hasOverlap = false
+      for (const occupied of occupiedIntervals) {
+        if (
+          (currentTime >= occupied.start && currentTime < occupied.end) ||
+          (proposedEnd > occupied.start && proposedEnd <= occupied.end) ||
+          (currentTime <= occupied.start && proposedEnd >= occupied.end)
+        ) {
+          hasOverlap = true
+          break
+        }
       }
+      
+      if (!hasOverlap && !isLunchTime) {
+        times.push(format(currentTime, 'HH:mm'))
+      }
+      
       currentTime = addMinutes(currentTime, intervalMinutes)
     }
 
