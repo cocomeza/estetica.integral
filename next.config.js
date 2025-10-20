@@ -1,68 +1,4 @@
 /** @type {import('next').NextConfig} */
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development', // Desactivar en desarrollo
-  runtimeCaching: [
-    {
-      urlPattern: /^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'google-fonts-webfonts',
-        expiration: {
-          maxEntries: 4,
-          maxAgeSeconds: 365 * 24 * 60 * 60 // 1 año
-        }
-      }
-    },
-    {
-      urlPattern: /^https:\/\/fonts\.(?:googleapis)\.com\/.*/i,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'google-fonts-stylesheets',
-        expiration: {
-          maxEntries: 4,
-          maxAgeSeconds: 7 * 24 * 60 * 60 // 1 semana
-        }
-      }
-    },
-    {
-      urlPattern: /\.(?:eot|otf|ttc|ttf|woff|woff2|font.css)$/i,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'static-font-assets',
-        expiration: {
-          maxEntries: 4,
-          maxAgeSeconds: 7 * 24 * 60 * 60 // 1 semana
-        }
-      }
-    },
-    {
-      urlPattern: /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'static-image-assets',
-        expiration: {
-          maxEntries: 64,
-          maxAgeSeconds: 24 * 60 * 60 // 24 horas
-        }
-      }
-    },
-    {
-      urlPattern: /\/_next\/image\?url=.+$/i,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'next-image',
-        expiration: {
-          maxEntries: 64,
-          maxAgeSeconds: 24 * 60 * 60 // 24 horas
-        }
-      }
-    }
-  ]
-})
-
 const nextConfig = {
   // Configuración TypeScript (permisiva solo en desarrollo)
   typescript: {
@@ -137,5 +73,4 @@ const nextConfig = {
   },
 };
 
-// 📱 MEJORA #12: Exportar con configuración PWA
-module.exports = withPWA(nextConfig);
+module.exports = nextConfig;
