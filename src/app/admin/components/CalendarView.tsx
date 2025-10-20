@@ -21,11 +21,14 @@ interface AppointmentData {
   specialist: {
     id: string
     name: string
+    email: string
+    phone: string
     title: string
   }
   service: {
     id: string
     name: string
+    description: string
     duration: number
   }
   patient: {
