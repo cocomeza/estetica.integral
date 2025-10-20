@@ -1,21 +1,15 @@
 'use client'
 
 /**
- * Vista de Calendario para Panel Admin
+ * Vista de Calendario Simplificada para Panel Admin
  * 📅 MEJORA #6: Visualización de citas en formato calendario
+ * Versión simplificada sin dependencias externas pesadas
  */
 
-import { useState, useEffect } from 'react'
-import FullCalendar from '@fullcalendar/react'
-import dayGridPlugin from '@fullcalendar/daygrid'
-import timeGridPlugin from '@fullcalendar/timegrid'
-import interactionPlugin from '@fullcalendar/interaction'
-import listPlugin from '@fullcalendar/list'
-import esLocale from '@fullcalendar/core/locales/es'
-import type { EventClickArg } from '@fullcalendar/core'
+import { useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
-import { Calendar, Clock, User, Sparkles, X } from 'lucide-react'
+import { Calendar, Clock, User, Sparkles, X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface AppointmentData {
   id: string
@@ -54,57 +48,59 @@ export default function CalendarView({
 }: CalendarViewProps) {
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [currentMonth, setCurrentMonth] = useState(new Date())
 
-  // Convertir citas a eventos de FullCalendar
-  const events = appointments.map((apt) => {
-    // Combinar fecha y hora
-    const startDateTime = `${apt.appointment_date}T${apt.appointment_time}`
-    
-    // Calcular hora de fin basándose en la duración
-    const [hours, minutes] = apt.appointment_time.split(':').map(Number)
-    const startMinutes = hours * 60 + minutes
-    const endMinutes = startMinutes + apt.service.duration
-    const endHours = Math.floor(endMinutes / 60)
-    const endMins = endMinutes % 60
-    const endTime = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`
-    const endDateTime = `${apt.appointment_date}T${endTime}`
+  // Obtener primer y último día del mes
+  const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
+  const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
+  
+  // Obtener día de la semana del primer día (0 = Domingo)
+  const firstDayOfWeek = firstDay.getDay()
+  
+  // Generar array de días del mes
+  const daysInMonth = lastDay.getDate()
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
 
-    // Colores según estado
-    let backgroundColor = '#a6566c' // Rosa/primary para scheduled
-    let borderColor = '#a6566c'
-    
-    if (apt.status === 'completed') {
-      backgroundColor = '#10b981' // Verde
-      borderColor = '#059669'
-    } else if (apt.status === 'cancelled') {
-      backgroundColor = '#ef4444' // Rojo
-      borderColor = '#dc2626'
-    }
-
-    return {
-      id: apt.id,
-      title: `${apt.patient.name} - ${apt.service.name}`,
-      start: startDateTime,
-      end: endDateTime,
-      backgroundColor,
-      borderColor,
-      extendedProps: {
-        appointment: apt
-      }
-    }
-  })
-
-  const handleEventClick = (info: EventClickArg) => {
-    const appointment = info.event.extendedProps.appointment as AppointmentData
-    setSelectedAppointment(appointment)
-    setShowDetailModal(true)
+  // Navegar entre meses
+  const goToPreviousMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))
   }
 
-  const handleEdit = () => {
-    if (selectedAppointment && onEditAppointment) {
-      setShowDetailModal(false)
-      onEditAppointment(selectedAppointment)
+  const goToNextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))
+  }
+
+  const goToToday = () => {
+    setCurrentMonth(new Date())
+  }
+
+  // Obtener citas para un día específico
+  const getAppointmentsForDay = (day: number) => {
+    const dateString = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    return appointments.filter(apt => apt.appointment_date === dateString)
+  }
+
+  // Verificar si es hoy
+  const isToday = (day: number) => {
+    const today = new Date()
+    return (
+      day === today.getDate() &&
+      currentMonth.getMonth() === today.getMonth() &&
+      currentMonth.getFullYear() === today.getFullYear()
+    )
+  }
+
+  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+  const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
+  const getStatusColor = (status: string) => {
+    const colors = {
+      scheduled: 'bg-pink-500',
+      completed: 'bg-green-500',
+      cancelled: 'bg-red-500'
     }
+    return colors[status as keyof typeof colors] || 'bg-gray-500'
   }
 
   const getStatusLabel = (status: string) => {
@@ -116,7 +112,7 @@ export default function CalendarView({
     return labels[status as keyof typeof labels] || status
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadgeColor = (status: string) => {
     const colors = {
       scheduled: 'bg-pink-100 text-pink-800',
       completed: 'bg-green-100 text-green-800',
@@ -128,77 +124,117 @@ export default function CalendarView({
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-            <Calendar className="h-5 w-5 mr-2 text-primary" />
-            Vista de Calendario
+        {/* Header del Calendario */}
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-2xl font-bold text-gray-900">
+            {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
           </h3>
-          {onRefresh && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={onRefresh}
-              className="px-3 py-1 text-sm bg-primary text-white rounded-lg hover:bg-pink-700 transition-colors"
+              onClick={goToToday}
+              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
             >
-              Actualizar
+              Hoy
             </button>
-          )}
+            <button
+              onClick={goToPreviousMonth}
+              className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={goToNextMonth}
+              className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+            {onRefresh && (
+              <button
+                onClick={onRefresh}
+                className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-pink-700 transition-colors"
+              >
+                Actualizar
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="calendar-wrapper">
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-            initialView="timeGridWeek"
-            locale={esLocale}
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-            }}
-            buttonText={{
-              today: 'Hoy',
-              month: 'Mes',
-              week: 'Semana',
-              day: 'Día',
-              list: 'Lista'
-            }}
-            events={events}
-            eventClick={handleEventClick}
-            slotMinTime="08:00:00"
-            slotMaxTime="20:00:00"
-            slotDuration="00:15:00"
-            allDaySlot={false}
-            height="auto"
-            nowIndicator={true}
-            weekends={true}
-            businessHours={{
-              daysOfWeek: [1, 2, 3, 4, 5, 6], // Lunes a Sábado
-              startTime: '09:00',
-              endTime: '18:00',
-            }}
-            slotLabelFormat={{
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false
-            }}
-            eventTimeFormat={{
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false
-            }}
-          />
+        {/* Grilla del Calendario */}
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          {/* Nombres de los días */}
+          <div className="grid grid-cols-7 bg-gray-50">
+            {dayNames.map(day => (
+              <div key={day} className="p-3 text-center text-sm font-semibold text-gray-700 border-b border-gray-200">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Días del mes */}
+          <div className="grid grid-cols-7">
+            {/* Espacios vacíos antes del primer día */}
+            {Array.from({ length: firstDayOfWeek }, (_, i) => (
+              <div key={`empty-${i}`} className="min-h-[120px] bg-gray-50 border-b border-r border-gray-200"></div>
+            ))}
+
+            {/* Días del mes */}
+            {days.map(day => {
+              const dayAppointments = getAppointmentsForDay(day)
+              const today = isToday(day)
+
+              return (
+                <div
+                  key={day}
+                  className={`min-h-[120px] p-2 border-b border-r border-gray-200 ${
+                    today ? 'bg-blue-50' : 'bg-white'
+                  } hover:bg-gray-50 transition-colors`}
+                >
+                  <div className={`text-sm font-semibold mb-2 ${
+                    today ? 'text-blue-600' : 'text-gray-700'
+                  }`}>
+                    {day}
+                    {today && <span className="ml-1 text-xs">(Hoy)</span>}
+                  </div>
+
+                  {/* Citas del día */}
+                  <div className="space-y-1">
+                    {dayAppointments.slice(0, 3).map(apt => (
+                      <button
+                        key={apt.id}
+                        onClick={() => {
+                          setSelectedAppointment(apt)
+                          setShowDetailModal(true)
+                        }}
+                        className={`w-full text-left px-2 py-1 rounded text-xs ${getStatusColor(apt.status)} text-white hover:opacity-90 transition-opacity`}
+                      >
+                        <div className="font-medium truncate">{apt.appointment_time}</div>
+                        <div className="truncate opacity-90">{apt.patient.name}</div>
+                      </button>
+                    ))}
+                    {dayAppointments.length > 3 && (
+                      <div className="text-xs text-gray-500 text-center">
+                        +{dayAppointments.length - 3} más
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
 
         {/* Leyenda */}
-        <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+        <div className="mt-6 flex items-center justify-center gap-6 text-sm">
           <div className="flex items-center">
-            <div className="w-4 h-4 rounded bg-pink-600 mr-2"></div>
+            <div className="w-4 h-4 rounded bg-pink-500 mr-2"></div>
             <span className="text-gray-700">Programada</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-4 rounded bg-green-600 mr-2"></div>
+            <div className="w-4 h-4 rounded bg-green-500 mr-2"></div>
             <span className="text-gray-700">Completada</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-4 rounded bg-red-600 mr-2"></div>
+            <div className="w-4 h-4 rounded bg-red-500 mr-2"></div>
             <span className="text-gray-700">Cancelada</span>
           </div>
         </div>
@@ -249,7 +285,7 @@ export default function CalendarView({
                     <div className="space-y-4">
                       {/* Estado */}
                       <div className="flex justify-center">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedAppointment.status)}`}>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(selectedAppointment.status)}`}>
                           {getStatusLabel(selectedAppointment.status)}
                         </span>
                       </div>
@@ -282,7 +318,7 @@ export default function CalendarView({
                           <h4 className="text-sm font-semibold text-gray-700">Fecha y Hora</h4>
                         </div>
                         <p className="text-gray-900 font-medium">
-                          {new Date(selectedAppointment.appointment_date).toLocaleDateString('es-AR', { 
+                          {new Date(selectedAppointment.appointment_date + 'T12:00:00').toLocaleDateString('es-AR', { 
                             weekday: 'long', 
                             year: 'numeric', 
                             month: 'long', 
@@ -303,7 +339,10 @@ export default function CalendarView({
                       {/* Botón de Editar */}
                       {onEditAppointment && (
                         <button
-                          onClick={handleEdit}
+                          onClick={() => {
+                            setShowDetailModal(false)
+                            onEditAppointment(selectedAppointment)
+                          }}
                           className="w-full bg-primary text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors font-medium"
                         >
                           Editar Cita
@@ -317,76 +356,6 @@ export default function CalendarView({
           </div>
         </Dialog>
       </Transition>
-
-      {/* Estilos personalizados para FullCalendar */}
-      <style jsx global>{`
-        .calendar-wrapper {
-          font-family: inherit;
-        }
-        
-        .fc {
-          font-size: 0.875rem;
-        }
-        
-        .fc-toolbar-title {
-          font-size: 1.5rem !important;
-          font-weight: 700;
-          color: #26272b;
-        }
-        
-        .fc-button {
-          background-color: #a6566c !important;
-          border-color: #a6566c !important;
-          text-transform: capitalize;
-        }
-        
-        .fc-button:hover {
-          background-color: #8a4557 !important;
-          border-color: #8a4557 !important;
-        }
-        
-        .fc-button-active {
-          background-color: #6b3544 !important;
-          border-color: #6b3544 !important;
-        }
-        
-        .fc-event {
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        
-        .fc-event:hover {
-          opacity: 0.9;
-          transform: scale(1.02);
-        }
-        
-        .fc-daygrid-event {
-          white-space: normal !important;
-          padding: 2px 4px;
-        }
-        
-        .fc-timegrid-event {
-          border-radius: 4px;
-        }
-        
-        .fc-event-title {
-          font-weight: 500;
-        }
-        
-        .fc-col-header-cell {
-          background-color: #f9fafb;
-          font-weight: 600;
-        }
-        
-        .fc-day-today {
-          background-color: #fef3f2 !important;
-        }
-        
-        .fc-timegrid-slot-label {
-          font-size: 0.75rem;
-        }
-      `}</style>
     </>
   )
 }
-
