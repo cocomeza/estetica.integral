@@ -1,4 +1,4 @@
-# 🌸 Centro de Estética Integral - Lorena Esquivel
+#  Centro de Estética Integral - Lorena Esquivel
 
 ## Sistema de Gestión de Turnos Online
 
@@ -254,14 +254,14 @@ Proyecto desarrollado para uso exclusivo de **Centro de Estética Integral - Lor
 
 **Desarrollado por:** Botón Creativo
 **Cliente:** Lorena Esquivel
-**Año:** 2024
+**Año:** 2025
 **Versión:** 1.0.0
 
 ---
 
-## 🎉 ¡Listo para usar!
+##  ¡Listo para usar!
 
 El sistema está completamente funcional y listo para recibir reservas. Documentación completa incluida para administración y mantenimiento.
 
-**¡Éxito con tu negocio! 🌸**
+**¡Éxito con tu negocio! **
 
