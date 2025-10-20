@@ -48,7 +48,7 @@ interface AppointmentData {
   appointment_time: string
   status: 'scheduled' | 'completed' | 'cancelled'
   notes?: string
-  created_at: string
+  created_at?: string  // ✅ Cambiar a opcional para compatibilidad
   specialist: {
     id: string
     name: string
