@@ -66,8 +66,8 @@ npm run dev
 
 | Día | Horario | Servicios |
 |-----|---------|-----------|
-| Lunes - Viernes | 9:00 - 18:00 | Todos |
-| Sábados | 9:00 - 13:00 | Solo Depilación |
+| Lunes - Viernes | 9:00 - 18:00<br>(Almuerzo: 13:00 - 14:00) | Todos |
+| Sábados | 9:00 - 13:00 | Todos |
 | Domingos | Cerrado | - |
 
 ---

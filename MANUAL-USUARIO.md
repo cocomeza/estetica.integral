@@ -86,9 +86,10 @@ Después de reservar:
 - 📧 Email: lorena@esteticaintegral.com.ar
 - 📍 Dirección: Av. Corrientes 1234, CABA
 
-**Horario de atención telefónica:**
-- Lunes a Viernes: 9:00 AM - 6:00 PM
-- Sábados: 9:00 AM - 1:00 PM
+**Horarios de Atención:**
+- Lunes a Viernes: 9:00 - 18:00 (almuerzo 13:00-14:00)
+- Sábados: 9:00 - 13:00 (todos los servicios)
+- Domingos: Cerrado
 
 ---
 

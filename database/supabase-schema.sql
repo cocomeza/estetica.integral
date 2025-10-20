@@ -173,9 +173,10 @@ INSERT INTO work_schedules (specialist_id, day_of_week, start_time, end_time, lu
 SELECT s.id, generate_series(1, 5), '09:00'::time, '18:00'::time, '13:00'::time, '14:00'::time
 FROM specialists s WHERE s.name = 'Lorena Esquivel';
 
--- Sábado (6): Solo depilación de 9:00 a 13:00
+-- Sábado (6): TODOS los servicios de 9:00 a 13:00 (sin almuerzo)
+-- NULL en allowed_services = TODOS los servicios permitidos
 INSERT INTO work_schedules (specialist_id, day_of_week, start_time, end_time, allowed_services)
-SELECT s.id, 6, '09:00'::time, '13:00'::time, ARRAY(SELECT aes.id FROM aesthetic_services aes WHERE aes.name = 'Depilación Láser')
+SELECT s.id, 6, '09:00'::time, '13:00'::time, NULL
 FROM specialists s WHERE s.name = 'Lorena Esquivel';
 
 -- Crear usuario administrador por defecto (password: admin123)
