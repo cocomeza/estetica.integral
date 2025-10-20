@@ -6,8 +6,19 @@ import {
   updateAppointmentForAdmin,
   deleteAppointmentForAdmin 
 } from '../../src/lib/supabase-admin'
+import { applyRateLimit, appointmentLimiter } from '../../src/lib/rate-limit'
+import { verifyRecaptcha } from '../../src/lib/recaptcha'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // 🛡️ MEJORA #1: Aplicar rate limiting para reservas públicas
+  if (req.method === 'POST') {
+    try {
+      await applyRateLimit(req, res, appointmentLimiter)
+    } catch {
+      return // El rate limiter ya envió la respuesta
+    }
+  }
+
   // La autenticación se maneja en el middleware
 
   if (req.method === 'GET') {
@@ -72,7 +83,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.log('🔵 POST /api/appointments - Body recibido:', JSON.stringify(req.body, null, 2))
       
       // Verificar si es una reserva pública (desde el frontend) o admin
-      const { specialistId, serviceId, patientInfo, appointmentDate, appointmentTime, duration } = req.body
+      const { specialistId, serviceId, patientInfo, appointmentDate, appointmentTime, duration, recaptchaToken } = req.body
       
       console.log('🔍 Verificando campos:', { 
         hasSpecialistId: !!specialistId, 
@@ -87,6 +98,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         if (!specialistId || !serviceId || !appointmentDate || !appointmentTime || !patientInfo?.name || !patientInfo?.email) {
           return res.status(400).json({ error: 'Especialista, servicio, fecha, hora y datos del paciente son requeridos' })
+        }
+
+        // 🤖 MEJORA #2: Verificar token de reCAPTCHA
+        if (recaptchaToken) {
+          const captchaResult = await verifyRecaptcha(recaptchaToken, 'submit_appointment')
+          if (!captchaResult.success) {
+            console.error('❌ Verificación de CAPTCHA fallida:', captchaResult.error)
+            return res.status(400).json({ 
+              error: 'Verificación de seguridad fallida. Por favor recarga la página e intenta nuevamente.' 
+            })
+          }
+          console.log('✅ CAPTCHA verificado con score:', captchaResult.score)
+        } else if (process.env.NODE_ENV !== 'development') {
+          // En producción, CAPTCHA es requerido
+          return res.status(400).json({ error: 'Token de verificación requerido' })
         }
 
         // Crear el appointment usando la función pública

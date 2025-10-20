@@ -10,16 +10,31 @@ import { Fragment } from 'react'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { downloadAppointmentReceipt } from '../lib/pdf-generator'
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 
 interface AppointmentBookingProps {
   serviceId: string
   onBack: () => void
 }
 
-// Función para validar email
+// 📧 MEJORA #4: Función mejorada para validar email
 const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  // Regex más estricta que valida formato correcto de email
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
   return emailRegex.test(email.trim())
+}
+
+// 📱 MEJORA #5: Función para validar teléfono argentino
+const isValidArgentinaPhone = (phone: string): boolean => {
+  if (!phone || phone.trim() === '') return true // Teléfono es opcional
+  
+  // Formatos válidos para Argentina:
+  // +54 11 1234-5678
+  // 11 1234-5678
+  // 1112345678
+  // +54 9 11 1234-5678 (con código de celular)
+  const phoneRegex = /^(\+?54)?[ ]?(9[ ]?)?(11|[2-9]\d{1,3})[ ]?\d{4}[-]?\d{4}$/
+  return phoneRegex.test(phone.trim())
 }
 
 // Función para normalizar texto
@@ -40,6 +55,9 @@ const formatName = (name: string): string => {
 // Usar función centralizada para formateo de fechas
 
 export default function AppointmentBooking({ serviceId, onBack }: AppointmentBookingProps) {
+  // 🤖 MEJORA #2: Hook de reCAPTCHA
+  const { executeRecaptcha } = useGoogleReCaptcha()
+  
   const [specialist, setSpecialist] = useState<Specialist | null>(null)
   const [service, setService] = useState<AestheticService | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -280,8 +298,8 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
         }
         break
       case 'phone':
-        if (value && !/^[\+]?[\d\s\-\(\)]+$/.test(value)) {
-          errors.phone = 'Formato de teléfono inválido'
+        if (value && !isValidArgentinaPhone(value)) {
+          errors.phone = 'Formato: +54 11 1234-5678 o 11 1234-5678'
         } else {
           errors.phone = ''
         }
@@ -330,6 +348,21 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
     setError(null)
     
     try {
+      // 🤖 MEJORA #2: Obtener token de reCAPTCHA
+      let recaptchaToken = ''
+      if (executeRecaptcha) {
+        try {
+          recaptchaToken = await executeRecaptcha('submit_appointment')
+        } catch (captchaError) {
+          console.error('Error obteniendo token de CAPTCHA:', captchaError)
+          // Continuar sin CAPTCHA en desarrollo
+          if (process.env.NODE_ENV !== 'development') {
+            setError('Error de verificación. Por favor recarga la página e intenta nuevamente.')
+            return
+          }
+        }
+      }
+
       // Normalizar y formatear datos del paciente
       const normalizedPatientInfo = {
         name: formatName(patientInfo.name), // Formatear nombre correctamente
@@ -351,7 +384,8 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
           appointmentDate: formatDateForAPI(selectedDate),
           appointmentTime: selectedTime,
           duration: service?.duration || 45,
-          patientInfo: normalizedPatientInfo
+          patientInfo: normalizedPatientInfo,
+          recaptchaToken // 🤖 Incluir token de CAPTCHA
         })
       })
 

@@ -788,6 +788,17 @@ export async function createPublicAppointment({
     if (process.env.NODE_ENV === 'development') {
       console.log('✅ Reserva pública creada exitosamente:', newAppointment.id)
     }
+
+    // 📧 MEJORA #3: Enviar email de confirmación
+    try {
+      const { sendAppointmentConfirmation } = await import('./email')
+      await sendAppointmentConfirmation(newAppointment)
+      console.log('✅ Email de confirmación enviado')
+    } catch (emailError) {
+      // No fallar la reserva si el email falla
+      console.error('⚠️ Error enviando email (la reserva se creó correctamente):', emailError)
+    }
+
     return newAppointment
 
   } catch (error: any) {

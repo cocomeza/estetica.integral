@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { setAdminSession } from '../../../src/lib/admin-auth'
 import { createClient } from '@supabase/supabase-js'
+import { applyRateLimit, loginLimiter } from '../../../src/lib/rate-limit'
 const bcrypt = require('bcryptjs')
 
 // Validar que las variables de entorno existan
@@ -18,6 +19,15 @@ export default async function handler(
   res: NextApiResponse
 ) {
   console.log('🔵 Login API called:', req.method, req.url)
+  
+  // 🛡️ MEJORA #1: Aplicar rate limiting para login (5 intentos cada 15 min)
+  if (req.method === 'POST') {
+    try {
+      await applyRateLimit(req, res, loginLimiter)
+    } catch {
+      return // El rate limiter ya envió la respuesta
+    }
+  }
   
   // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true')

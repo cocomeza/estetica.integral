@@ -136,6 +136,9 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   const [availableTimes, setAvailableTimes] = useState<string[]>([])
   const [formLoading, setFormLoading] = useState(false)
   
+  // 🔄 MEJORA #7: Tracking de cambios sin guardar
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  
   // Usar función centralizada para formateo de fechas con depuración y corrección
   const formatYmdStatic = (ymd: string) => {
     console.log(`🔍 Formateando fecha: ${ymd}`)
@@ -247,6 +250,20 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     fetchData()
   }, [currentPage, search, statusFilter, specialistFilter, dateFromFilter, dateToFilter])
 
+  // 🔄 MEJORA #7: Advertencia antes de salir con cambios sin guardar
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault()
+        e.returnValue = '¿Seguro que quieres salir? Hay cambios sin guardar.'
+        return '¿Seguro que quieres salir? Hay cambios sin guardar.'
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasUnsavedChanges])
+
   const handleLogout = async () => {
     try {
       await fetch('/api/admin/logout', { method: 'POST' })
@@ -303,6 +320,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     }
 
     setFormLoading(true)
+    setHasUnsavedChanges(false) // 🔄 Limpiar flag al guardar
     try {
       let patientId = appointmentForm.patientId
 
@@ -363,6 +381,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     }
 
     setFormLoading(true)
+    setHasUnsavedChanges(false) // 🔄 Limpiar flag al guardar
     try {
       const response = await fetch('/api/admin/appointments', {
         method: 'PUT',
@@ -423,7 +442,14 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   }
 
   const openCreateModal = () => {
+    // 🔄 MEJORA #7: Advertir si hay cambios sin guardar
+    if (hasUnsavedChanges) {
+      if (!confirm('¿Seguro que quieres crear una nueva cita? Hay cambios sin guardar.')) {
+        return
+      }
+    }
     resetForm()
+    setHasUnsavedChanges(false)
     setShowCreateModal(true)
   }
 
@@ -463,6 +489,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       notes: ''
     })
     setAvailableTimes([])
+    setHasUnsavedChanges(false) // 🔄 Limpiar flag al resetear
   }
 
   // Funciones para períodos inteligentes
@@ -597,6 +624,8 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
 
   // Handle form changes
   const handleFormChange = (field: keyof CreateAppointmentForm, value: string) => {
+    setHasUnsavedChanges(true) // 🔄 MEJORA #7: Marcar que hay cambios sin guardar
+    
     setAppointmentForm(prev => ({
       ...prev,
       [field]: value

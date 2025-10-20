@@ -1,23 +1,48 @@
 # Variables de entorno para Centro de Estética Integral
 # IMPORTANTE: Crear un archivo llamado .env.local con este contenido y reemplazar los valores
 
+# ========================================
+# CONFIGURACIÓN BÁSICA (REQUERIDO)
+# ========================================
+
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_clave_anonima_de_supabase
+SUPABASE_SERVICE_ROLE_KEY=tu_clave_service_role_de_supabase
 
-# Ejemplo de configuración real:
-# NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
-# NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2RlZmdoaWprbG1ub3AiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTYzNDU2Nzg5MCwiZXhwIjoxOTUwMTQzODkwfQ.ejemplo_clave_anonima
+# Admin Authentication
+JWT_SECRET=tu_jwt_secret_minimo_32_caracteres_muy_seguro
 
-# SMTP Configuration (Opcional - no necesario para este proyecto)
-# SMTP_HOST=smtp.gmail.com
-# SMTP_PORT=587
-# SMTP_USER=tu_email@gmail.com
-# SMTP_PASS=tu_contraseña_de_aplicacion
+# ========================================
+# MEJORAS DE SEGURIDAD (RECOMENDADO)
+# ========================================
 
-# Admin Configuration (Opcional)
-# ADMIN_EMAIL=admin@esteticaintegral.com.ar
-# ADMIN_PASSWORD=admin123
+# Google reCAPTCHA v3 - MEJORA #2
+# Obtener en: https://www.google.com/recaptcha/admin
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=tu_recaptcha_site_key
+RECAPTCHA_SECRET_KEY=tu_recaptcha_secret_key
+
+# ========================================
+# NOTIFICACIONES POR EMAIL (OPCIONAL)
+# ========================================
+
+# SMTP Configuration - MEJORA #3
+# Para Gmail: Generar app password en Google Account > Security > App Passwords
+# Instrucciones: https://support.google.com/accounts/answer/185833
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=tu-email@gmail.com
+SMTP_PASS=tu_gmail_app_password
+SMTP_FROM_NAME=Estética Integral
+SMTP_FROM_EMAIL=noreply@esteticaintegral.com.ar
+
+# ========================================
+# CRON JOBS (OPCIONAL)
+# ========================================
+
+# Cron Secret - MEJORA #9
+# Para recordatorios automáticos 24h antes
+CRON_SECRET=tu_cron_secret_key_muy_seguro
 
 # ========================================
 # INSTRUCCIONES PASO A PASO:
