@@ -475,40 +475,36 @@ export function ToastNotification({ notification, onRemove }: {
     }
   }
 
-  return (
-    <div className={getStyles()} role="alert" aria-live="polite">
-      <div className="flex items-start">
-        <span className="text-lg mr-2">{getIcon()}</span>
-        <div className="flex-1">
-          <p className="font-medium">{notification.message}</p>
-          {notification.actions && (
-            <div className="mt-2 space-x-2">
-              {notification.actions.map((action, index) => (
+  return `
+    <div class="${getStyles()}" role="alert" aria-live="polite">
+      <div class="flex items-start">
+        <span class="text-lg mr-2">${getIcon()}</span>
+        <div class="flex-1">
+          <p class="font-medium">${notification.message}</p>
+          ${notification.actions ? `
+            <div class="mt-2 space-x-2">
+              ${notification.actions.map((action: any, index: number) => `
                 <button
-                  key={index}
-                  onClick={action.action}
-                  className={`px-3 py-1 text-sm rounded ${
-                    action.variant === 'primary' ? 'bg-blue-500 text-white' :
-                    action.variant === 'danger' ? 'bg-red-500 text-white' :
-                    'bg-gray-200 text-gray-700'
-                  }`}
+                  key="${index}"
+                  onclick="${action.action}"
+                  class="px-3 py-1 text-sm rounded ${action.variant === 'primary' ? 'bg-blue-500 text-white' : action.variant === 'danger' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}"
                 >
-                  {action.label}
+                  ${action.label}
                 </button>
-              ))}
+              `).join('')}
             </div>
-          )}
+          ` : ''}
         </div>
         <button
-          onClick={() => onRemove(notification.id)}
-          className="ml-2 text-lg hover:text-gray-600"
+          onclick="onRemove('${notification.id}')"
+          class="ml-2 text-lg hover:text-gray-600"
           aria-label="Cerrar notificación"
         >
           ×
         </button>
       </div>
     </div>
-  )
+  `
 }
 
 /**
