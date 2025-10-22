@@ -36,12 +36,21 @@ export async function notifyAffectedPatients(
       
       // Enviar email de notificación
       await sendAppointmentConfirmation({
-        to: conflict.patientEmail,
-        patientName: conflict.patientName,
+        id: conflict.appointmentId,
+        patient: {
+          name: conflict.patientName,
+          email: conflict.patientEmail
+        },
+        specialist: {
+          name: 'Lorena Esquivel',
+          title: 'Esteticista Profesional'
+        },
+        service: {
+          name: conflict.serviceName,
+          duration: 45
+        },
         appointmentDate: conflict.originalDate,
         appointmentTime: conflict.originalTime,
-        serviceName: conflict.serviceName,
-        specialistName: 'Lorena Esquivel',
         customMessage: emailContent
       })
 
