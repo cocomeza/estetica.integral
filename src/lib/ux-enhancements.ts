@@ -513,31 +513,31 @@ export function ToastNotification({ notification, onRemove }: {
 export function EnhancedLoadingState({ loadingState }: { loadingState: LoadingState }) {
   if (!loadingState.isLoading) return null
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-        <div className="flex items-center space-x-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+  return `
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+        <div class="flex items-center space-x-3">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           <div>
-            <p className="font-medium text-gray-900">
-              {loadingState.message || 'Cargando...'}
+            <p class="font-medium text-gray-900">
+              ${loadingState.message || 'Cargando...'}
             </p>
-            {loadingState.progress !== undefined && (
-              <div className="mt-2">
-                <div className="bg-gray-200 rounded-full h-2">
+            ${loadingState.progress !== undefined ? `
+              <div class="mt-2">
+                <div class="bg-gray-200 rounded-full h-2">
                   <div 
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${loadingState.progress}%` }}
+                    class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                    style="width: ${loadingState.progress}%"
                   ></div>
                 </div>
-                <p className="text-sm text-gray-600 mt-1">
-                  {loadingState.progress}% completado
+                <p class="text-sm text-gray-600 mt-1">
+                  ${loadingState.progress}% completado
                 </p>
               </div>
-            )}
+            ` : ''}
           </div>
         </div>
       </div>
     </div>
-  )
+  `
 }
