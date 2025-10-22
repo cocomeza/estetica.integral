@@ -1,5 +1,5 @@
 # 🌸 Estética Integral - Lorena Esquivel
-<!-- Build fix: 277570a -->
+<!-- Build fix: a071853 -->
 
 Sistema profesional de gestión de turnos para centro de estética.
 
