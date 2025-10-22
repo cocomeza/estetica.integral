@@ -193,7 +193,7 @@ export async function getActiveLocks(): Promise<AppointmentLock[]> {
       .gt('expires_at', new Date().toISOString())
       .order('locked_at', { ascending: false })
 
-    return locks?.map(lock => ({
+    return locks?.map((lock: any) => ({
       id: lock.id,
       specialistId: lock.specialist_id,
       appointmentDate: lock.appointment_date,
