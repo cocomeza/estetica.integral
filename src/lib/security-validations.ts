@@ -425,8 +425,7 @@ export function securityMiddleware(config: SecurityConfig = DEFAULT_SECURITY_CON
       })
     }
     
-    // Agregar información de seguridad al request
-    req.security = securityValidation
+    // Información de seguridad validada
     
     if (next) {
       await next()
