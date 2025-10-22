@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Simular validación básica
-    const conflicts = []
+    const conflicts: any[] = []
     const hasConflicts = conflicts.length > 0
 
     return res.status(200).json({
