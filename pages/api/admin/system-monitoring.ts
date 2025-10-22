@@ -31,9 +31,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const metrics = {
           totalAppointments: appointments?.length || 0,
-          scheduledAppointments: appointments?.filter(a => a.status === 'scheduled').length || 0,
-          completedAppointments: appointments?.filter(a => a.status === 'completed').length || 0,
-          cancelledAppointments: appointments?.filter(a => a.status === 'cancelled').length || 0,
+          scheduledAppointments: appointments?.filter((a: any) => a.status === 'scheduled').length || 0,
+          completedAppointments: appointments?.filter((a: any) => a.status === 'completed').length || 0,
+          cancelledAppointments: appointments?.filter((a: any) => a.status === 'cancelled').length || 0,
           systemHealth: 'healthy',
           uptime: process.uptime(),
           memoryUsage: process.memoryUsage(),
