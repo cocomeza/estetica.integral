@@ -179,7 +179,7 @@ async function checkInactiveServicesWithAppointments(): Promise<DataIntegrityIss
       .eq('is_active', false)
       .eq('appointments.status', 'scheduled')
     
-    inactiveServices?.forEach(service => {
+    inactiveServices?.forEach((service: any) => {
       issues.push({
         type: 'data_inconsistency',
         severity: 'medium',
