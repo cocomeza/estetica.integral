@@ -186,7 +186,7 @@ export async function getAppointmentChangeHistory(appointmentId: string): Promis
       .eq('appointment_id', appointmentId)
       .order('version', { ascending: false })
 
-    return history?.map(change => ({
+    return history?.map((change: any) => ({
       version: change.version,
       changes: change.changes,
       modifiedBy: change.modified_by,
