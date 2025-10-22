@@ -81,7 +81,7 @@ export default function CalendarView({
   // Obtener citas para un día específico
   const getAppointmentsForDay = (day: number) => {
     const dateString = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-    return appointments.filter((appointment: any) => apt.appointment_date === dateString)
+    return appointments.filter((appointment: any) => appointment.appointment_date === dateString)
   }
 
   // Verificar si es hoy
