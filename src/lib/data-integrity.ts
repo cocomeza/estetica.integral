@@ -124,7 +124,7 @@ async function checkOrphanedAppointments(): Promise<DataIntegrityIssue[]> {
       .select('id, specialist_id')
       .not('specialist_id', 'in', `(SELECT id FROM specialists WHERE is_active = true)`)
     
-    orphanedBySpecialist?.forEach(appointment => {
+    orphanedBySpecialist?.forEach((appointment: any) => {
       issues.push({
         type: 'orphaned_record',
         severity: 'high',
