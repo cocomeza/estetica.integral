@@ -342,13 +342,13 @@ export async function getConcurrencyStats(): Promise<{
 
     const stats = {
       totalConflicts: conflicts?.length || 0,
-      resolvedConflicts: conflicts?.filter(c => c.status === 'resolved').length || 0,
-      pendingConflicts: conflicts?.filter(c => c.status === 'pending').length || 0,
+      resolvedConflicts: conflicts?.filter((c: any) => c.status === 'resolved').length || 0,
+      pendingConflicts: conflicts?.filter((c: any) => c.status === 'pending').length || 0,
       conflictsByType: {} as Record<string, number>
     }
 
     // Contar por tipo
-    conflicts?.forEach(conflict => {
+    conflicts?.forEach((conflict: any) => {
       const type = conflict.conflict_type || 'unknown'
       stats.conflictsByType[type] = (stats.conflictsByType[type] || 0) + 1
     })
