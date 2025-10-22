@@ -8,8 +8,24 @@ import {
 } from '../../src/lib/supabase-admin'
 import { applyRateLimit, appointmentLimiter } from '../../src/lib/rate-limit'
 import { verifyRecaptcha } from '../../src/lib/recaptcha'
+import { withAppointmentLock, getClientIdentifier } from '../../src/lib/appointment-locks'
+import { validateAppointmentTime } from '../../src/lib/time-validation'
+import { normalizeFrontendDate, normalizeFrontendTime, getCurrentArgentinaTime } from '../../src/lib/timezone-handler'
+import { validateRequestSecurity, sanitizeInput } from '../../src/lib/security-validations'
+import { getOptimizedAppointments } from '../../src/lib/performance-optimizer'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // 🛡️ CRÍTICO: Validación de seguridad
+  const securityValidation = validateRequestSecurity(req)
+  if (securityValidation.blocked) {
+    console.error('🚫 Request bloqueado por seguridad:', securityValidation.threats)
+    return res.status(403).json({
+      error: 'Request bloqueado por políticas de seguridad',
+      threats: securityValidation.threats,
+      riskLevel: securityValidation.riskLevel
+    })
+  }
+
   // 🛡️ MEJORA #1: Aplicar rate limiting para reservas públicas
   if (req.method === 'POST') {
     try {
@@ -47,7 +63,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         sortOrder: sortOrder as 'asc' | 'desc'
       }
 
-      const result = await getAppointmentsForAdmin(filters)
+      // 🎨 BAJO: Usar consultas optimizadas
+      const optimizedFilters = {
+        specialistId: filters.specialistId,
+        dateFrom: filters.startDate,
+        dateTo: filters.endDate,
+        status: filters.status,
+        limit: filters.limit
+      }
+
+      // Filtrar valores undefined
+      const cleanFilters = Object.fromEntries(
+        Object.entries(optimizedFilters).filter(([_, value]) => value !== undefined)
+      )
+
+      const appointments = await getOptimizedAppointments(cleanFilters)
+      
+      // Formatear resultado para mantener compatibilidad
+      const result = {
+        appointments,
+        totalCount: appointments.length,
+        totalPages: Math.ceil(appointments.length / filters.limit),
+        currentPage: filters.page,
+        hasNextPage: filters.page < Math.ceil(appointments.length / filters.limit),
+        hasPrevPage: filters.page > 1
+      }
+      
       return res.status(200).json(result)
     } catch (error) {
       console.error('Error fetching appointments:', error)
@@ -85,19 +126,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Verificar si es una reserva pública (desde el frontend) o admin
       const { specialistId, serviceId, patientInfo, appointmentDate, appointmentTime, duration, recaptchaToken } = req.body
       
-      console.log('🔍 Verificando campos:', { 
-        hasSpecialistId: !!specialistId, 
-        hasServiceId: !!serviceId, 
-        hasPatientInfo: !!patientInfo,
-        patientInfo 
+      // 🛡️ MEDIO: Sanitizar datos de entrada
+      const sanitizedData = sanitizeInput({
+        specialistId,
+        serviceId,
+        appointmentDate,
+        appointmentTime,
+        patientInfo
       })
       
-      if (specialistId && serviceId && patientInfo) {
+      const {
+        specialistId: sanitizedSpecialistId,
+        serviceId: sanitizedServiceId,
+        appointmentDate: sanitizedAppointmentDate,
+        appointmentTime: sanitizedAppointmentTime,
+        patientInfo: sanitizedPatientInfo
+      } = sanitizedData
+      
+      console.log('🔍 Verificando campos:', { 
+        hasSpecialistId: !!sanitizedSpecialistId, 
+        hasServiceId: !!sanitizedServiceId, 
+        hasPatientInfo: !!sanitizedPatientInfo,
+        patientInfo: sanitizedPatientInfo 
+      })
+      
+      if (sanitizedSpecialistId && sanitizedServiceId && sanitizedPatientInfo) {
         // Reserva pública desde el frontend
         console.log('✅ Es reserva pública - procesando...')
         
-        if (!specialistId || !serviceId || !appointmentDate || !appointmentTime || !patientInfo?.name || !patientInfo?.email) {
+        if (!sanitizedSpecialistId || !sanitizedServiceId || !sanitizedAppointmentDate || !sanitizedAppointmentTime || !sanitizedPatientInfo?.name || !sanitizedPatientInfo?.email) {
           return res.status(400).json({ error: 'Especialista, servicio, fecha, hora y datos del paciente son requeridos' })
+        }
+
+        // 🌍 CRÍTICO: Normalizar fechas y horas a zona horaria de Argentina
+        const normalizedDate = normalizeFrontendDate(sanitizedAppointmentDate)
+        const normalizedTime = normalizeFrontendTime(sanitizedAppointmentTime)
+        
+        console.log(`🌍 Fecha normalizada: ${sanitizedAppointmentDate} → ${normalizedDate}`)
+        console.log(`🌍 Hora normalizada: ${sanitizedAppointmentTime} → ${normalizedTime}`)
+
+        // ⏰ CRÍTICO: Validar horario antes de proceder
+        const timeValidation = validateAppointmentTime(normalizedDate, normalizedTime)
+        if (!timeValidation.isValid) {
+          console.error('❌ Horario inválido:', timeValidation.error)
+          return res.status(400).json({ 
+            error: timeValidation.error,
+            suggestedTime: timeValidation.suggestedTime,
+            warnings: timeValidation.warnings
+          })
+        }
+        
+        if (timeValidation.warnings && timeValidation.warnings.length > 0) {
+          console.log('⚠️ Advertencias de horario:', timeValidation.warnings)
         }
 
         // 🤖 MEJORA #2: Verificar token de reCAPTCHA
@@ -115,18 +195,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(400).json({ error: 'Token de verificación requerido' })
         }
 
-        // Crear el appointment usando la función pública
-        const { createPublicAppointment } = await import('../../src/lib/supabase-admin')
-        const newAppointment = await createPublicAppointment({
-          specialistId,
-          serviceId,
-          appointmentDate,
-          appointmentTime,
-          duration: duration || 45,
-          patientInfo
-        })
+        // 🔒 CRÍTICO: Usar locks para prevenir race conditions
+        const clientIdentifier = getClientIdentifier(req)
+        console.log('🔒 Cliente identificado:', clientIdentifier)
+        
+        const lockResult = await withAppointmentLock(
+          sanitizedSpecialistId,
+          normalizedDate,
+          normalizedTime,
+          clientIdentifier,
+          async (lockId) => {
+            console.log(`🔒 Lock adquirido: ${lockId}`)
+            
+            // Crear el appointment usando la función pública
+            const { createPublicAppointment } = await import('../../src/lib/supabase-admin')
+            const newAppointment = await createPublicAppointment({
+              specialistId: sanitizedSpecialistId,
+              serviceId: sanitizedServiceId,
+              appointmentDate: normalizedDate,
+              appointmentTime: normalizedTime,
+              duration: duration || 45,
+              patientInfo: sanitizedPatientInfo
+            })
+            
+            console.log('✅ Reserva creada exitosamente:', newAppointment)
+            return newAppointment
+          }
+        )
 
-        console.log('✅ Reserva creada exitosamente:', newAppointment)
+        if (!lockResult.success) {
+          console.error('❌ Error con lock:', lockResult.error)
+          return res.status(409).json({ 
+            error: lockResult.error || 'Este horario está siendo reservado por otro usuario. Intenta nuevamente.' 
+          })
+        }
+
+        const newAppointment = lockResult.result
         return res.status(201).json({ 
           success: true, 
           appointment: newAppointment 
