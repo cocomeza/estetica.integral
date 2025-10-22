@@ -49,9 +49,8 @@ export async function notifyAffectedPatients(
           name: conflict.serviceName,
           duration: 45
         },
-        appointmentDate: conflict.originalDate,
-        appointmentTime: conflict.originalTime,
-        customMessage: emailContent
+        appointment_date: conflict.originalDate,
+        appointment_time: conflict.originalTime
       })
 
       // Registrar la notificación en la base de datos
