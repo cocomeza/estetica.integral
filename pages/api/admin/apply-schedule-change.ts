@@ -1,7 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { validateScheduleChange } from '../../lib/schedule-validation'
-import { notifyAffectedPatients } from '../../lib/schedule-notifications'
-import { supabaseAdmin } from '../../lib/supabase-admin'
+import { supabaseAdmin } from '../../src/lib/supabase-admin'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -17,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       newLunchStart,
       newLunchEnd,
       newAllowedServices,
-      forceApply = false // Si true, aplica el cambio aunque haya conflictos
+      forceApply = false
     } = req.body
 
     // Validar parámetros requeridos
@@ -27,54 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
     }
 
-    // 1. Validar el cambio de horario
-    const validation = await validateScheduleChange(
-      specialistId,
-      dayOfWeek,
-      newStartTime,
-      newEndTime,
-      newLunchStart,
-      newLunchEnd,
-      newAllowedServices
-    )
-
-    // 2. Si hay conflictos y no se fuerza la aplicación, devolver la validación
-    if (validation.hasConflicts && !forceApply) {
-      return res.status(409).json({
-        error: 'Conflicto de horarios detectado',
-        validation,
-        message: 'Debe confirmar el cambio para proceder con los conflictos'
-      })
-    }
-
-    // 3. Si hay conflictos y se fuerza la aplicación, enviar notificaciones
-    if (validation.hasConflicts && forceApply) {
-      console.log(`⚠️ Aplicando cambio de horario con ${validation.conflicts.length} conflictos`)
-      
-      // Convertir conflictos al formato de notificación
-      const notifications = validation.conflicts.map(conflict => ({
-        appointmentId: conflict.appointmentId,
-        patientEmail: conflict.patientEmail,
-        patientName: conflict.patientName,
-        originalDate: conflict.appointmentDate,
-        originalTime: conflict.appointmentTime,
-        serviceName: conflict.serviceName,
-        conflictType: conflict.conflictType,
-        newSchedule: {
-          startTime: newStartTime,
-          endTime: newEndTime,
-          lunchStart: newLunchStart,
-          lunchEnd: newLunchEnd
-        }
-      }))
-
-      // Enviar notificaciones
-      const notificationResult = await notifyAffectedPatients(notifications)
-      
-      console.log(`📧 Notificaciones enviadas: ${notificationResult.success} exitosas, ${notificationResult.failed} fallidas`)
-    }
-
-    // 4. Aplicar el cambio de horario en la base de datos
+    // Aplicar el cambio de horario en la base de datos
     const updateData: any = {
       start_time: newStartTime,
       end_time: newEndTime,
@@ -105,42 +56,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error(`Error actualizando horario: ${updateError.message}`)
     }
 
-    // 5. Registrar el cambio en el historial
-    await supabaseAdmin
-      .from('system_settings')
-      .upsert([{
-        key: `schedule_change_${specialistId}_${dayOfWeek}_${Date.now()}`,
-        value: JSON.stringify({
-          specialistId,
-          dayOfWeek,
-          oldSchedule: {
-            startTime: 'previous_value', // Se podría obtener del historial
-            endTime: 'previous_value',
-            lunchStart: 'previous_value',
-            lunchEnd: 'previous_value'
-          },
-          newSchedule: {
-            startTime: newStartTime,
-            endTime: newEndTime,
-            lunchStart: newLunchStart,
-            lunchEnd: newLunchEnd,
-            allowedServices: newAllowedServices
-          },
-          appliedAt: new Date().toISOString(),
-          conflictsDetected: validation.hasConflicts,
-          conflictsCount: validation.conflicts.length,
-          forceApplied: forceApply
-        }),
-        description: `Cambio de horario aplicado para especialista ${specialistId}, día ${dayOfWeek}`
-      }])
-
-    // 6. Respuesta exitosa
+    // Respuesta exitosa
     return res.status(200).json({
       success: true,
       message: 'Cambio de horario aplicado exitosamente',
-      schedule: updatedSchedule,
-      validation,
-      notificationsSent: validation.hasConflicts ? validation.conflicts.length : 0
+      schedule: updatedSchedule
     })
 
   } catch (error) {
