@@ -474,7 +474,7 @@ class SystemMonitor {
     cutoffDate.setDate(cutoffDate.getDate() - 30) // Mantener 30 días
 
     // Limpiar métricas antiguas
-    this.metrics = this.metrics.filter(m => m.timestamp > cutoffDate)
+    this.metrics = this.metrics.filter((m: any) => m.timestamp > cutoffDate)
 
     // Limpiar alertas resueltas antiguas
     this.alerts = this.alerts.filter(
@@ -489,14 +489,14 @@ class SystemMonitor {
     const cutoffTime = new Date()
     cutoffTime.setHours(cutoffTime.getHours() - hours)
     
-    return this.metrics.filter(m => m.timestamp > cutoffTime)
+    return this.metrics.filter((m: any) => m.timestamp > cutoffTime)
   }
 
   /**
    * Obtiene alertas activas
    */
   getActiveAlerts(): Alert[] {
-    return this.alerts.filter(alert => !alert.resolvedAt)
+    return this.alerts.filter((alert: any) => !alert.resolvedAt)
   }
 
   /**

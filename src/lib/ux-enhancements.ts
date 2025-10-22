@@ -133,7 +133,7 @@ export function useToastNotifications() {
   }
 
   const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id))
+    setNotifications(prev => prev.filter((n: any) => n.id !== id))
   }
 
   const clearAllNotifications = () => {
@@ -188,7 +188,7 @@ export function useFormValidation<T>(initialValues: T) {
     const newErrors: Partial<Record<keyof T, string>> = {}
     let isValid = true
 
-    Object.keys(validators).forEach(field => {
+    Object.keys(validators).forEach((field: any) => {
       const validator = validators[field as keyof T]
       if (validator) {
         const error = validator(values[field as keyof T])

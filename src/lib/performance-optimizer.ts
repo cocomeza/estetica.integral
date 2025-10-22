@@ -258,7 +258,7 @@ class PerformanceOptimizer {
 
     // Crear mapa de citas ocupadas
     const occupiedSlots = new Set<number>()
-    appointments.forEach(apt => {
+    appointments.forEach((apt: any) => {
       const start = this.timeToMinutes(apt.appointment_time)
       const end = start + apt.duration
       for (let time = start; time < end; time += slotDuration) {
@@ -477,7 +477,7 @@ class PerformanceOptimizer {
     const cutoffTime = new Date()
     cutoffTime.setHours(cutoffTime.getHours() - hours)
     
-    this.metrics = this.metrics.filter(m => m.timestamp > cutoffTime)
+    this.metrics = this.metrics.filter((m: any) => m.timestamp > cutoffTime)
   }
 }
 

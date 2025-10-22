@@ -48,7 +48,7 @@ const formatName = (name: string): string => {
     .trim()
     .toLowerCase()
     .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word: any) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
 }
 

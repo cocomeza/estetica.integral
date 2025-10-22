@@ -553,7 +553,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
     const cutoffDate = threeMonthsAgo.toISOString().split('T')[0]
     
-    return appointments.filter(appointment => {
+    return appointments.filter((appointment: any) => {
       const appointmentDate = appointment.appointment_date
       return appointmentDate >= cutoffDate
     })
@@ -564,7 +564,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
     const cutoffDate = threeMonthsAgo.toISOString().split('T')[0]
     
-    return appointments.filter(appointment => {
+    return appointments.filter((appointment: any) => {
       const appointmentDate = appointment.appointment_date
       return appointmentDate < cutoffDate
     })
@@ -614,25 +614,25 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
 
     // Filtro por estado
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(appointment => appointment.status === statusFilter)
+      filtered = filtered.filter((appointment: any) => appointment.status === statusFilter)
     }
 
     // Filtro por especialista
     if (specialistFilter) {
-      filtered = filtered.filter(appointment => appointment.specialist?.id === specialistFilter)
+      filtered = filtered.filter((appointment: any) => appointment.specialist?.id === specialistFilter)
     }
 
     // Filtro por fechas
     if (dateFromFilter) {
-      filtered = filtered.filter(appointment => appointment.appointment_date >= dateFromFilter)
+      filtered = filtered.filter((appointment: any) => appointment.appointment_date >= dateFromFilter)
     }
     if (dateToFilter) {
-      filtered = filtered.filter(appointment => appointment.appointment_date <= dateToFilter)
+      filtered = filtered.filter((appointment: any) => appointment.appointment_date <= dateToFilter)
     }
 
     // Filtro para mostrar/ocultar completadas en vista activa
     if (viewMode === 'active' && !showCompleted) {
-      filtered = filtered.filter(appointment => appointment.status !== 'completed')
+      filtered = filtered.filter((appointment: any) => appointment.status !== 'completed')
     }
 
     return filtered

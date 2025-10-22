@@ -248,7 +248,7 @@ async function checkScheduleInconsistencies(): Promise<DataIntegrityIssue[]> {
       .select('id, specialist_id, day_of_week, start_time, end_time')
       .gt('start_time', 'end_time')
     
-    invalidSchedules?.forEach(schedule => {
+    invalidSchedules?.forEach((schedule: any) => {
       issues.push({
         type: 'data_inconsistency',
         severity: 'high',
@@ -268,7 +268,7 @@ async function checkScheduleInconsistencies(): Promise<DataIntegrityIssue[]> {
       .not('lunch_end', 'is', null)
       .or('lunch_start.lt.start_time,lunch_end.gt.end_time')
     
-    invalidLunchSchedules?.forEach(schedule => {
+    invalidLunchSchedules?.forEach((schedule: any) => {
       issues.push({
         type: 'data_inconsistency',
         severity: 'medium',
@@ -300,7 +300,7 @@ async function checkMissingCriticalData(): Promise<DataIntegrityIssue[]> {
       .select('id')
       .or('appointment_date.is.null,appointment_time.is.null')
     
-    missingDates?.forEach(appointment => {
+    missingDates?.forEach((appointment: any) => {
       issues.push({
         type: 'missing_data',
         severity: 'critical',
@@ -318,7 +318,7 @@ async function checkMissingCriticalData(): Promise<DataIntegrityIssue[]> {
       .select('id, name')
       .is('email', null)
     
-    missingEmails?.forEach(patient => {
+    missingEmails?.forEach((patient: any) => {
       issues.push({
         type: 'missing_data',
         severity: 'medium',
@@ -354,7 +354,7 @@ async function checkInvalidDates(): Promise<DataIntegrityIssue[]> {
       .lt('appointment_date', pastDate.toISOString().split('T')[0])
       .eq('status', 'scheduled')
     
-    oldAppointments?.forEach(appointment => {
+    oldAppointments?.forEach((appointment: any) => {
       issues.push({
         type: 'data_inconsistency',
         severity: 'medium',
@@ -384,7 +384,7 @@ async function checkDuplicateRecords(): Promise<DataIntegrityIssue[]> {
     const { data: duplicateAppointments } = await supabaseAdmin
       .rpc('find_duplicate_appointments')
     
-    duplicateAppointments?.forEach(duplicate => {
+    duplicateAppointments?.forEach((duplicate: any) => {
       issues.push({
         type: 'data_inconsistency',
         severity: 'high',

@@ -103,7 +103,7 @@ export const PROFESSIONAL_INFO = {
   phone: '+54 11 1234-5678',
   address: 'Av. Corrientes 1234, CABA, Argentina',
   profileImage: '/images/lorena-esquivel.jpg',
-  specialties: AESTHETIC_SERVICES.map(service => service.id),
+  specialties: AESTHETIC_SERVICES.map((service: any) => service.id),
   isActive: true
 }
 
@@ -134,7 +134,7 @@ export const WORK_SCHEDULE = {
 
 // Función helper para obtener servicios por categoría
 export const getServicesByCategory = (category: AestheticService['category']) => {
-  return AESTHETIC_SERVICES.filter(service => service.category === category && service.isActive)
+  return AESTHETIC_SERVICES.filter((service: any) => service.category === category && service.isActive)
 }
 
 // Función helper para obtener servicio por ID

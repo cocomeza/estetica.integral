@@ -37,7 +37,7 @@ export default function ServiceSelection({ services, onSelectService }: ServiceS
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   // Filtrar servicios por búsqueda y categoría
-  const filteredServices = services.filter(service => {
+  const filteredServices = services.filter((service: any) => {
     const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          service.description.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = !selectedCategory || service.category === selectedCategory
@@ -54,7 +54,7 @@ export default function ServiceSelection({ services, onSelectService }: ServiceS
   }, {} as Record<string, AestheticService[]>)
 
   // Obtener categorías únicas
-  const categories = Array.from(new Set(services.map(s => s.category)))
+  const categories = Array.from(new Set(services.map((s: any) => s.category)))
 
   return (
     <div className="space-y-6">

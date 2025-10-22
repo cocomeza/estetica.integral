@@ -81,7 +81,7 @@ export default function CalendarView({
   // Obtener citas para un día específico
   const getAppointmentsForDay = (day: number) => {
     const dateString = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-    return appointments.filter(apt => apt.appointment_date === dateString)
+    return appointments.filter((appointment: any) => apt.appointment_date === dateString)
   }
 
   // Verificar si es hoy
@@ -167,7 +167,7 @@ export default function CalendarView({
         <div className="border border-gray-200 rounded-lg overflow-hidden">
           {/* Nombres de los días */}
           <div className="grid grid-cols-7 bg-gray-50">
-            {dayNames.map(day => (
+            {dayNames.map((day: any) => (
               <div key={day} className="p-3 text-center text-sm font-semibold text-gray-700 border-b border-gray-200">
                 {day}
               </div>
@@ -182,7 +182,7 @@ export default function CalendarView({
             ))}
 
             {/* Días del mes */}
-            {days.map(day => {
+            {days.map((day: any) => {
               const dayAppointments = getAppointmentsForDay(day)
               const today = isToday(day)
 
@@ -202,7 +202,7 @@ export default function CalendarView({
 
                   {/* Citas del día */}
                   <div className="space-y-1">
-                    {dayAppointments.slice(0, 3).map(apt => (
+                    {dayAppointments.slice(0, 3).map((apt: any) => (
                       <button
                         key={apt.id}
                         onClick={() => {

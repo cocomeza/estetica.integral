@@ -346,7 +346,7 @@ class EmailService {
         total: 0
       }
 
-      stats?.forEach(item => {
+      stats?.forEach((item: any) => {
         counts[item.status as keyof typeof counts]++
         counts.total++
       })

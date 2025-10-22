@@ -63,7 +63,7 @@ export async function validateScheduleChange(
   }
 
   // Filtrar solo los turnos del día de la semana específico
-  const dayAppointments = appointments.filter(apt => {
+  const dayAppointments = appointments.filter((apt: any) => {
     const appointmentDate = new Date(apt.appointment_date)
     return appointmentDate.getDay() === dayOfWeek
   })

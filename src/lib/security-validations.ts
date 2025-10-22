@@ -283,7 +283,7 @@ function detectSuspiciousHeaders(headers: any): string[] {
     'x-cluster-client-ip'
   ]
   
-  suspiciousHeaderNames.forEach(header => {
+  suspiciousHeaderNames.forEach((header: any) => {
     if (headers[header]) {
       suspiciousHeaders.push(header)
     }
@@ -299,7 +299,7 @@ function validateRequestBody(body: any, suspiciousPatterns: string[]): string[] 
   const threats: string[] = []
   const bodyStr = JSON.stringify(body).toLowerCase()
   
-  suspiciousPatterns.forEach(pattern => {
+  suspiciousPatterns.forEach((pattern: any) => {
     if (bodyStr.includes(pattern.toLowerCase())) {
       threats.push(pattern)
     }
@@ -315,7 +315,7 @@ function validateQueryParameters(query: any, suspiciousPatterns: string[]): stri
   const threats: string[] = []
   const queryStr = JSON.stringify(query).toLowerCase()
   
-  suspiciousPatterns.forEach(pattern => {
+  suspiciousPatterns.forEach((pattern: any) => {
     if (queryStr.includes(pattern.toLowerCase())) {
       threats.push(pattern)
     }
