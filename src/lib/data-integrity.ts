@@ -216,7 +216,7 @@ async function checkInactiveSpecialistsWithAppointments(): Promise<DataIntegrity
       .eq('is_active', false)
       .eq('appointments.status', 'scheduled')
     
-    inactiveSpecialists?.forEach(specialist => {
+    inactiveSpecialists?.forEach((specialist: any) => {
       issues.push({
         type: 'data_inconsistency',
         severity: 'critical',
