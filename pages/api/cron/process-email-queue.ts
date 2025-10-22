@@ -85,9 +85,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         const stats = {
-          pending: queueStats?.filter(e => e.status === 'pending').length || 0,
-          sent: queueStats?.filter(e => e.status === 'sent').length || 0,
-          failed: queueStats?.filter(e => e.status === 'failed').length || 0,
+          pending: queueStats?.filter((e: any) => e.status === 'pending').length || 0,
+          sent: queueStats?.filter((e: any) => e.status === 'sent').length || 0,
+          failed: queueStats?.filter((e: any) => e.status === 'failed').length || 0,
           total: queueStats?.length || 0
         }
 
