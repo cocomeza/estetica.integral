@@ -112,11 +112,19 @@ interface CreateAppointmentForm {
   notes: string
 }
 
+// Lorena Esquivel es la única especialista
+const LORENA_ESQUIVEL = {
+  id: 'lorena-esquivel-id', // Se obtendrá dinámicamente
+  name: 'Lorena Esquivel',
+  email: 'lorena@esteticaintegral.com',
+  title: 'Esteticista Profesional'
+}
+
 export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState<TabType>('appointments')
   const [appointments, setAppointments] = useState<AppointmentData[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, today: 0, scheduled: 0, completed: 0 })
-  const [specialists, setSpecialists] = useState<Doctor[]>([])
+  const [specialists, setSpecialists] = useState<Doctor[]>([LORENA_ESQUIVEL])
   const [services, setServices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -205,11 +213,24 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       const servicesData = await servicesRes.json()
 
       setStats(statsData.stats || { total: 0, today: 0, scheduled: 0, completed: 0 })
-      setSpecialists(statsData.specialists || [])
       
-      // Obtener el ID del primer especialista para gestión de horarios
+      // Lorena Esquivel es la única especialista - usar datos estáticos
+      setSpecialists([LORENA_ESQUIVEL])
+      
+      // Obtener el ID real de Lorena desde la base de datos si está disponible
       if (statsData.specialists && statsData.specialists.length > 0) {
+        const lorenaFromDB = statsData.specialists.find((s: any) => 
+          s.name.toLowerCase().includes('lorena') || 
+          s.name.toLowerCase().includes('esquivel')
+        )
+        if (lorenaFromDB) {
+          setSpecialistId(lorenaFromDB.id)
+        } else {
         setSpecialistId(statsData.specialists[0].id)
+        }
+      } else {
+        // Si no hay especialistas en la DB, usar un ID por defecto
+        setSpecialistId('lorena-esquivel-id')
       }
       
       // Depurar las fechas que vienen de la API
@@ -326,14 +347,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     setFormLoading(true)
     setHasUnsavedChanges(false) // 🔄 Limpiar flag al guardar
     try {
-      // Obtener automáticamente el ID de Lorena Esquivel (única especialista)
-      const specialistResponse = await fetch('/api/admin/specialists')
-      if (!specialistResponse.ok) {
-        throw new Error('Error al obtener información del especialista')
-      }
-      const specialistData = await specialistResponse.json()
-      const specialistId = specialistData.specialists[0]?.id
-      
+      // Usar el ID de Lorena Esquivel que ya tenemos
       if (!specialistId) {
         throw new Error('No se encontró especialista activo')
       }
@@ -395,14 +409,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     setFormLoading(true)
     setHasUnsavedChanges(false) // 🔄 Limpiar flag al guardar
     try {
-      // Obtener automáticamente el ID de Lorena Esquivel (única especialista)
-      const specialistResponse = await fetch('/api/admin/specialists')
-      if (!specialistResponse.ok) {
-        throw new Error('Error al obtener información del especialista')
-      }
-      const specialistData = await specialistResponse.json()
-      const specialistId = specialistData.specialists[0]?.id
-      
+      // Usar el ID de Lorena Esquivel que ya tenemos
       if (!specialistId) {
         throw new Error('No se encontró especialista activo')
       }
