@@ -339,19 +339,19 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       }
 
       // Crear el paciente con solo el nombre
-      const patientResponse = await fetch('/api/admin/patients', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: appointmentForm.patientName,
+        const patientResponse = await fetch('/api/admin/patients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: appointmentForm.patientName,
           email: `${appointmentForm.patientName.toLowerCase().replace(/\s+/g, '.')}@paciente.com`,
           phone: ''
+          })
         })
-      })
 
       if (!patientResponse.ok) {
-        const error = await patientResponse.json()
-        throw new Error(error.error)
+          const error = await patientResponse.json()
+          throw new Error(error.error)
       }
       
       const patientData = await patientResponse.json()
@@ -475,6 +475,12 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     resetForm()
     setHasUnsavedChanges(false)
     setShowCreateModal(true)
+    
+    // Cargar horarios disponibles para hoy si hay especialista
+    if (specialistId) {
+      const today = getTodayString()
+      fetchAvailableTimes(specialistId, today)
+    }
   }
 
   const openEditModal = (appointment: AppointmentData) => {
@@ -652,15 +658,12 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       const date = field === 'appointmentDate' ? value : appointmentForm.appointmentDate
       const serviceId = field === 'serviceId' ? value : appointmentForm.serviceId
       
-      if (date) {
-        // Obtener automáticamente el ID del especialista (Lorena Esquivel)
-        const specialistResponse = await fetch('/api/admin/specialists')
-        if (specialistResponse.ok) {
-          const specialistData = await specialistResponse.json()
-          const specialistId = specialistData.specialists[0]?.id
-          if (specialistId) {
-            fetchAvailableTimes(specialistId, date, serviceId)
-          }
+      if (date && specialistId) {
+        try {
+          await fetchAvailableTimes(specialistId, date, serviceId)
+        } catch (error) {
+          console.error('Error fetching available times:', error)
+          setAvailableTimes([])
         }
       } else {
         setAvailableTimes([])
@@ -1417,15 +1420,15 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                     {/* Nombre del Paciente */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Paciente</label>
-                      <input
-                        type="text"
+                          <input
+                            type="text"
                         value={appointmentForm.patientName}
-                        onChange={(e) => handleFormChange('patientName', e.target.value)}
-                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
+                            onChange={(e) => handleFormChange('patientName', e.target.value)}
+                            className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
                         placeholder="Ej: María González"
-                        required
-                      />
-                    </div>
+                            required
+                          />
+                        </div>
 
                     {/* Fecha y Hora */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
