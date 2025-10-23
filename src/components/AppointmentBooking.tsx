@@ -364,7 +364,6 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
     
     try {
       // Sistema simplificado sin reCAPTCHA para Lorena
-      let recaptchaToken = ''
 
       // Normalizar y formatear datos del paciente
       const normalizedPatientInfo = {
@@ -387,8 +386,7 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
           appointmentDate: formatDateForAPI(selectedDate),
           appointmentTime: selectedTime,
           duration: service?.duration || 45,
-          patientInfo: normalizedPatientInfo,
-          recaptchaToken // 🤖 Incluir token de CAPTCHA
+          patientInfo: normalizedPatientInfo
         })
       })
 

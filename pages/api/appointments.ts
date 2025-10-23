@@ -180,7 +180,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           console.log('⚠️ Advertencias de horario:', timeValidation.warnings)
         }
 
-        // 🤖 MEJORA #2: Verificar token de reCAPTCHA
+        // 🤖 MEJORA #2: Verificar token de reCAPTCHA (opcional para Lorena)
         if (recaptchaToken) {
           const captchaResult = await verifyRecaptcha(recaptchaToken, 'submit_appointment')
           if (!captchaResult.success) {
@@ -190,9 +190,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             })
           }
           console.log('✅ CAPTCHA verificado con score:', captchaResult.score)
-        } else if (process.env.NODE_ENV !== 'development') {
-          // En producción, CAPTCHA es requerido
-          return res.status(400).json({ error: 'Token de verificación requerido' })
+        } else {
+          // Sistema simplificado sin reCAPTCHA para Lorena
+          console.log('ℹ️ Reserva sin reCAPTCHA - sistema simplificado')
         }
 
         // 🔒 CRÍTICO: Usar locks para prevenir race conditions
