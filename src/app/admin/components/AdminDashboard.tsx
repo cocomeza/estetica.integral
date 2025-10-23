@@ -22,7 +22,8 @@ import {
   Save,
   Settings,
   CalendarX,
-  Megaphone
+  Megaphone,
+  User
 } from 'lucide-react'
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
@@ -104,12 +105,8 @@ interface Patient {
 }
 
 interface CreateAppointmentForm {
-  specialistId: string
   serviceId: string
-  patientId: string
-  patientName?: string
-  patientEmail?: string
-  patientPhone?: string
+  patientName: string
   appointmentDate: string
   appointmentTime: string
   notes: string
@@ -120,7 +117,6 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   const [appointments, setAppointments] = useState<AppointmentData[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, today: 0, scheduled: 0, completed: 0 })
   const [specialists, setSpecialists] = useState<Doctor[]>([])
-  const [patients, setPatients] = useState<Patient[]>([])
   const [services, setServices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -180,12 +176,8 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   
   // Formulario de crear/editar cita
   const [appointmentForm, setAppointmentForm] = useState<CreateAppointmentForm>({
-    specialistId: '',
     serviceId: '',
-    patientId: '',
     patientName: '',
-    patientEmail: '',
-    patientPhone: '',
     appointmentDate: '',
     appointmentTime: '',
     notes: ''
@@ -197,21 +189,19 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     try {
       setLoading(true)
       
-      // Fetch stats, specialists, appointments, patients and services
-      const [statsRes, appointmentsRes, patientsRes, servicesRes] = await Promise.all([
+      // Fetch stats, specialists, appointments and services (no patients needed)
+      const [statsRes, appointmentsRes, servicesRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch(`/api/admin/appointments?page=${currentPage}&search=${encodeURIComponent(search)}&status=${statusFilter}&specialistId=${specialistFilter}&startDate=${dateFromFilter}&endDate=${dateToFilter}`),
-        fetch('/api/admin/patients'),
         fetch('/api/admin/services')
       ])
 
-      if (!statsRes.ok || !appointmentsRes.ok || !patientsRes.ok || !servicesRes.ok) {
+      if (!statsRes.ok || !appointmentsRes.ok || !servicesRes.ok) {
         throw new Error('Error al cargar datos')
       }
 
       const statsData = await statsRes.json()
       const appointmentsData = await appointmentsRes.json()
-      const patientsData = await patientsRes.json()
       const servicesData = await servicesRes.json()
 
       setStats(statsData.stats || { total: 0, today: 0, scheduled: 0, completed: 0 })
@@ -238,7 +228,6 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       
       setAppointments(appointmentsData.appointments || [])
       setTotalPages(appointmentsData.totalPages || 1)
-      setPatients(patientsData.patients || [])
       setServices(servicesData.services || [])
     } catch (err) {
       setError('Error al cargar los datos del panel')
@@ -246,7 +235,6 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       // Asegurar que los arrays nunca sean undefined
       setAppointments([])
       setSpecialists([])
-      setPatients([])
       setServices([])
       setStats({ total: 0, today: 0, scheduled: 0, completed: 0 })
     } finally {
@@ -330,7 +318,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   }
 
   const handleCreateAppointment = async () => {
-    if (!appointmentForm.specialistId || !appointmentForm.serviceId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
+    if (!appointmentForm.serviceId || !appointmentForm.patientName || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
       alert('Por favor completa todos los campos obligatorios')
       return
     }
@@ -338,34 +326,42 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     setFormLoading(true)
     setHasUnsavedChanges(false) // 🔄 Limpiar flag al guardar
     try {
-      let patientId = appointmentForm.patientId
-
-      // Si es un nuevo paciente, crearlo primero
-      if (!patientId && appointmentForm.patientName && appointmentForm.patientEmail) {
-        const patientResponse = await fetch('/api/admin/patients', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: appointmentForm.patientName,
-            email: appointmentForm.patientEmail,
-            phone: appointmentForm.patientPhone
-          })
-        })
-
-        if (patientResponse.ok) {
-          const patientData = await patientResponse.json()
-          patientId = patientData.patient.id
-        } else {
-          const error = await patientResponse.json()
-          throw new Error(error.error)
-        }
+      // Obtener automáticamente el ID de Lorena Esquivel (única especialista)
+      const specialistResponse = await fetch('/api/admin/specialists')
+      if (!specialistResponse.ok) {
+        throw new Error('Error al obtener información del especialista')
       }
+      const specialistData = await specialistResponse.json()
+      const specialistId = specialistData.specialists[0]?.id
+      
+      if (!specialistId) {
+        throw new Error('No se encontró especialista activo')
+      }
+
+      // Crear el paciente con solo el nombre
+      const patientResponse = await fetch('/api/admin/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: appointmentForm.patientName,
+          email: `${appointmentForm.patientName.toLowerCase().replace(/\s+/g, '.')}@paciente.com`,
+          phone: ''
+        })
+      })
+
+      if (!patientResponse.ok) {
+        const error = await patientResponse.json()
+        throw new Error(error.error)
+      }
+      
+      const patientData = await patientResponse.json()
+      const patientId = patientData.patient.id
 
       const response = await fetch('/api/admin/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          specialistId: appointmentForm.specialistId,
+          specialistId: specialistId,
           serviceId: appointmentForm.serviceId,
           patientId: patientId,
           appointmentDate: appointmentForm.appointmentDate,
@@ -391,7 +387,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   }
 
   const handleEditAppointment = async () => {
-    if (!editingAppointment || !appointmentForm.specialistId || !appointmentForm.serviceId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
+    if (!editingAppointment || !appointmentForm.serviceId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
       alert('Por favor completa todos los campos obligatorios')
       return
     }
@@ -399,14 +395,26 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
     setFormLoading(true)
     setHasUnsavedChanges(false) // 🔄 Limpiar flag al guardar
     try {
+      // Obtener automáticamente el ID de Lorena Esquivel (única especialista)
+      const specialistResponse = await fetch('/api/admin/specialists')
+      if (!specialistResponse.ok) {
+        throw new Error('Error al obtener información del especialista')
+      }
+      const specialistData = await specialistResponse.json()
+      const specialistId = specialistData.specialists[0]?.id
+      
+      if (!specialistId) {
+        throw new Error('No se encontró especialista activo')
+      }
+
       const response = await fetch('/api/admin/appointments', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           appointmentId: editingAppointment.id,
-          specialistId: appointmentForm.specialistId,
+          specialistId: specialistId,
           serviceId: appointmentForm.serviceId,
-          patientId: appointmentForm.patientId,
+          patientId: editingAppointment.patient.id, // Usar el paciente existente
           appointmentDate: appointmentForm.appointmentDate,
           appointmentTime: appointmentForm.appointmentTime,
           notes: appointmentForm.notes
@@ -472,12 +480,8 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   const openEditModal = (appointment: AppointmentData) => {
     setEditingAppointment(appointment)
     setAppointmentForm({
-      specialistId: appointment.specialist.id,
       serviceId: appointment.service.id,
-      patientId: appointment.patient.id,
       patientName: appointment.patient.name,
-      patientEmail: appointment.patient.email,
-      patientPhone: appointment.patient.phone,
       appointmentDate: appointment.appointment_date,
       appointmentTime: appointment.appointment_time,
       notes: appointment.notes || ''
@@ -494,12 +498,8 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
 
   const resetForm = () => {
     setAppointmentForm({
-      specialistId: '',
       serviceId: '',
-      patientId: '',
       patientName: '',
-      patientEmail: '',
-      patientPhone: '',
       appointmentDate: '',
       appointmentTime: '',
       notes: ''
@@ -639,7 +639,7 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
   }
 
   // Handle form changes
-  const handleFormChange = (field: keyof CreateAppointmentForm, value: string) => {
+  const handleFormChange = async (field: keyof CreateAppointmentForm, value: string) => {
     setHasUnsavedChanges(true) // 🔄 MEJORA #7: Marcar que hay cambios sin guardar
     
     setAppointmentForm(prev => ({
@@ -647,14 +647,21 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
       [field]: value
     }))
 
-    // If specialist, service or date changes, fetch available times
-    if (field === 'specialistId' || field === 'appointmentDate' || field === 'serviceId') {
-      const specialistId = field === 'specialistId' ? value : appointmentForm.specialistId
+    // If service or date changes, fetch available times
+    if (field === 'appointmentDate' || field === 'serviceId') {
       const date = field === 'appointmentDate' ? value : appointmentForm.appointmentDate
       const serviceId = field === 'serviceId' ? value : appointmentForm.serviceId
       
-      if (specialistId && date) {
-        fetchAvailableTimes(specialistId, date, serviceId)
+      if (date) {
+        // Obtener automáticamente el ID del especialista (Lorena Esquivel)
+        const specialistResponse = await fetch('/api/admin/specialists')
+        if (specialistResponse.ok) {
+          const specialistData = await specialistResponse.json()
+          const specialistId = specialistData.specialists[0]?.id
+          if (specialistId) {
+            fetchAvailableTimes(specialistId, date, serviceId)
+          }
+        }
       } else {
         setAvailableTimes([])
       }
@@ -1376,22 +1383,17 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                   </Dialog.Title>
                   
                   <div className="space-y-4">
-                    {/* Selección de Doctor */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Doctor</label>
-                      <select
-                        value={appointmentForm.specialistId}
-                        onChange={(e) => handleFormChange('specialistId', e.target.value)}
-                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
-                        required
-                      >
-                        <option value="">Seleccionar especialista...</option>
-                        {specialists && specialists.map((specialist) => (
-                          <option key={specialist.id} value={specialist.id}>
-                            {specialist.name} - {specialist.title}
-                          </option>
-                        ))}
-                      </select>
+                    {/* Información del Especialista */}
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <div className="flex items-center">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <User className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-blue-900">Especialista</p>
+                          <p className="text-sm text-blue-700">Lorena Esquivel - Esteticista Profesional</p>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Selección de Servicio */}
@@ -1412,57 +1414,18 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                       </select>
                     </div>
 
-                    {/* Selección/Creación de Paciente */}
+                    {/* Nombre del Paciente */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Paciente</label>
-                      <select
-                        value={appointmentForm.patientId}
-                        onChange={(e) => handleFormChange('patientId', e.target.value)}
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Paciente</label>
+                      <input
+                        type="text"
+                        value={appointmentForm.patientName}
+                        onChange={(e) => handleFormChange('patientName', e.target.value)}
                         className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
-                      >
-                        <option value="">Crear nuevo paciente...</option>
-                        {patients && patients.map((patient) => (
-                          <option key={patient.id} value={patient.id}>
-                            {patient.name} - {patient.email}
-                          </option>
-                        ))}
-                      </select>
+                        placeholder="Ej: María González"
+                        required
+                      />
                     </div>
-
-                    {/* Campos para nuevo paciente */}
-                    {!appointmentForm.patientId && (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Nombre completo</label>
-                          <input
-                            type="text"
-                            value={appointmentForm.patientName || ''}
-                            onChange={(e) => handleFormChange('patientName', e.target.value)}
-                            className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                          <input
-                            type="email"
-                            value={appointmentForm.patientEmail || ''}
-                            onChange={(e) => handleFormChange('patientEmail', e.target.value)}
-                            className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
-                          <input
-                            type="tel"
-                            value={appointmentForm.patientPhone || ''}
-                            onChange={(e) => handleFormChange('patientPhone', e.target.value)}
-                            className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
-                          />
-                        </div>
-                      </div>
-                    )}
 
                     {/* Fecha y Hora */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1582,25 +1545,19 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h4 className="text-sm font-medium text-gray-700 mb-2">Paciente</h4>
                       <p className="text-sm text-gray-900">{appointmentForm.patientName}</p>
-                      <p className="text-sm text-gray-500">{appointmentForm.patientEmail}</p>
                     </div>
 
-                    {/* Selección de Doctor */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Doctor</label>
-                      <select
-                        value={appointmentForm.specialistId}
-                        onChange={(e) => handleFormChange('specialistId', e.target.value)}
-                        className="w-full px-3 py-2 bg-white border-2 border-gray-500 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
-                        required
-                      >
-                        <option value="">Seleccionar especialista...</option>
-                        {specialists && specialists.map((specialist) => (
-                          <option key={specialist.id} value={specialist.id}>
-                            {specialist.name} - {specialist.title}
-                          </option>
-                        ))}
-                      </select>
+                    {/* Información del Especialista */}
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <div className="flex items-center">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <User className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-blue-900">Especialista</p>
+                          <p className="text-sm text-blue-700">Lorena Esquivel - Esteticista Profesional</p>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Selección de Servicio */}

@@ -382,6 +382,17 @@ export async function createAppointmentForAdmin(appointmentData: CreateAppointme
     throw new Error(`No se pueden crear citas en esta fecha: ${closure.reason || 'Fecha cerrada'}`)
   }
 
+  // Obtener la duración del servicio
+  const { data: service } = await supabaseAdmin
+    .from('aesthetic_services')
+    .select('duration')
+    .eq('id', appointmentData.serviceId)
+    .single()
+
+  if (!service) {
+    throw new Error('Servicio no encontrado')
+  }
+
   // Verificar que el horario esté disponible
   const { data: existingAppointment } = await supabaseAdmin
     .from('appointments')
@@ -404,6 +415,7 @@ export async function createAppointmentForAdmin(appointmentData: CreateAppointme
       patient_id: appointmentData.patientId,
       appointment_date: appointmentData.appointmentDate,
       appointment_time: appointmentData.appointmentTime,
+      duration: service.duration, // 🔧 FIX: Agregar duración del servicio
       status: appointmentData.status || 'scheduled',
       notes: appointmentData.notes
     }])
@@ -503,7 +515,19 @@ export async function updateAppointmentForAdmin(appointmentId: string, updateDat
   const updateObject: any = {}
   
   if (updateData.specialistId) updateObject.specialist_id = updateData.specialistId
-  if (updateData.serviceId) updateObject.service_id = updateData.serviceId
+  if (updateData.serviceId) {
+    updateObject.service_id = updateData.serviceId
+    // Si se cambia el servicio, obtener la nueva duración
+    const { data: service } = await supabaseAdmin
+      .from('aesthetic_services')
+      .select('duration')
+      .eq('id', updateData.serviceId)
+      .single()
+    
+    if (service) {
+      updateObject.duration = service.duration
+    }
+  }
   if (updateData.patientId) updateObject.patient_id = updateData.patientId
   if (updateData.appointmentDate) updateObject.appointment_date = updateData.appointmentDate
   if (updateData.appointmentTime) updateObject.appointment_time = updateData.appointmentTime

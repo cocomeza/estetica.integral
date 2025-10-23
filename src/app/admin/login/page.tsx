@@ -47,7 +47,7 @@ export default function AdminLogin() {
           <div className="text-center mb-8">
             <div className="mx-auto h-16 w-16 mb-4 flex items-center justify-center">
               <img 
-                src="/images/logo-estetica-integral.png" 
+                src="/images/logo_estetica-integral.png" 
                 alt="Estética Integral" 
                 className="h-16 w-16 object-contain"
               />

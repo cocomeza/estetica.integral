@@ -10,7 +10,6 @@ import { Fragment } from 'react'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { downloadAppointmentReceipt } from '../lib/pdf-generator'
-import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 
 interface AppointmentBookingProps {
   serviceId: string
@@ -28,13 +27,30 @@ const isValidEmail = (email: string): boolean => {
 const isValidArgentinaPhone = (phone: string): boolean => {
   if (!phone || phone.trim() === '') return true // Teléfono es opcional
   
+  // Limpiar el número de espacios y caracteres especiales
+  const cleanPhone = phone.trim().replace(/[\s-]/g, '')
+  
   // Formatos válidos para Argentina:
-  // +54 11 1234-5678
-  // 11 1234-5678
-  // 1112345678
-  // +54 9 11 1234-5678 (con código de celular)
-  const phoneRegex = /^(\+?54)?[ ]?(9[ ]?)?(11|[2-9]\d{1,3})[ ]?\d{4}[-]?\d{4}$/
-  return phoneRegex.test(phone.trim())
+  // +54 11 1234-5678 (Buenos Aires)
+  // 11 1234-5678 (Buenos Aires)
+  // +54 9 11 1234-5678 (celular Buenos Aires)
+  // 54 03407 532790 (Ramallo, Pcia de Bs As)
+  // +54 03407532790 (Ramallo sin espacios)
+  // 54 03329 123456 (San Pedro, Pcia de Bs As)
+  // 54 03364 123456 (San Nicolás de los Arroyos, Pcia de Bs As)
+  // 54 0341 123456 (Rosario, Pcia de Santa Fe)
+  // 03407 532790 (Ramallo sin código país)
+  // +54 3407 532790 (Ramallo con +54)
+  
+  // Patrón más flexible que acepta:
+  // - Código país opcional (+54 o 54)
+  // - Código de celular opcional (9)
+  // - Código de área específico (11, 03407, 03329, 03364, 0341) o cualquier código de 2-5 dígitos
+  // - Número local (6-8 dígitos)
+  // - Espacios opcionales entre todas las partes
+  const phoneRegex = /^(\+?54[ ]?)?(9[ ]?)?(11|03407|03329|03364|0341|[0-9]{2,5})[ ]?\d{6,8}$/
+  
+  return phoneRegex.test(cleanPhone)
 }
 
 // Función para normalizar texto
@@ -55,8 +71,7 @@ const formatName = (name: string): string => {
 // Usar función centralizada para formateo de fechas
 
 export default function AppointmentBooking({ serviceId, onBack }: AppointmentBookingProps) {
-  // 🤖 MEJORA #2: Hook de reCAPTCHA
-  const { executeRecaptcha } = useGoogleReCaptcha()
+  // Sin reCAPTCHA - sistema simplificado para Lorena
   
   const [specialist, setSpecialist] = useState<Specialist | null>(null)
   const [service, setService] = useState<AestheticService | null>(null)
@@ -299,7 +314,7 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
         break
       case 'phone':
         if (value && !isValidArgentinaPhone(value)) {
-          errors.phone = 'Formato: +54 11 1234-5678 o 11 1234-5678'
+          errors.phone = 'Formato: +54 11 1234-5678, 11 1234-5678, +54 03407532790 (Ramallo), 54 03407 532790'
         } else {
           errors.phone = ''
         }
@@ -348,20 +363,8 @@ export default function AppointmentBooking({ serviceId, onBack }: AppointmentBoo
     setError(null)
     
     try {
-      // 🤖 MEJORA #2: Obtener token de reCAPTCHA
+      // Sistema simplificado sin reCAPTCHA para Lorena
       let recaptchaToken = ''
-      if (executeRecaptcha) {
-        try {
-          recaptchaToken = await executeRecaptcha('submit_appointment')
-        } catch (captchaError) {
-          console.error('Error obteniendo token de CAPTCHA:', captchaError)
-          // Continuar sin CAPTCHA en desarrollo
-          if (process.env.NODE_ENV !== 'development') {
-            setError('Error de verificación. Por favor recarga la página e intenta nuevamente.')
-            return
-          }
-        }
-      }
 
       // Normalizar y formatear datos del paciente
       const normalizedPatientInfo = {

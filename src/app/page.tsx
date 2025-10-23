@@ -107,7 +107,7 @@ export default function Home() {
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
                 <img 
-                  src="/images/logo-estetica-integral.png" 
+                  src="/images/logo_estetica-integral.png" 
                   alt="Estética Integral" 
                   className="h-10 w-10 object-contain"
                 />
